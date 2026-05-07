@@ -85,9 +85,14 @@ async function generateWithClaude(params: {
   
   console.log('Claude API: Starting generation with model:', model)
   
-  // Fetch and convert image to base64
-  const imageBuffer = await fetch(params.imageUrl).then(r => r.arrayBuffer())
+  // Fetch and convert image to base64, detect actual media type
+  const imageResponse = await fetch(params.imageUrl)
+  const imageBuffer = await imageResponse.arrayBuffer()
   const base64Image = Buffer.from(imageBuffer).toString('base64')
+  
+  // Detect actual media type from content-type header or file extension
+  const contentType = imageResponse.headers.get('content-type') || 'image/jpeg'
+  const mediaType = contentType.includes('png') ? 'image/png' : 'image/jpeg'
   
   // Build the prompt
   const prompt = buildClaudePrompt(brandContext, briefText)
@@ -104,7 +109,7 @@ async function generateWithClaude(params: {
             type: 'image',
             source: {
               type: 'base64',
-              media_type: 'image/jpeg',
+              media_type: mediaType,
               data: base64Image,
             },
           },
