@@ -147,7 +147,7 @@ async function generateWithClaude(params: {
  * Build prompt for Claude
  */
 function buildClaudePrompt(brandContext: BrandContext, briefText?: string): string {
-  return `You are a professional social media content creator for a barber shop. Analyze the image and generate an engaging caption.
+  return `You are a professional social media content creator specializing in the ${brandContext.industry || 'retail'} industry. Analyze the image and generate an engaging caption.
 
 ## Brand Context
 **Brand Name:** ${brandContext.brand_name}
@@ -156,7 +156,7 @@ function buildClaudePrompt(brandContext: BrandContext, briefText?: string): stri
 **Target Audience:** ${brandContext.target_audience}
 **Tone:** ${brandContext.tone}
 **Personality:** ${brandContext.personality}
-**CTA:** ${brandContext.cta || 'Book your cut today'}
+**CTA:** ${brandContext.cta || 'Contact us today'}
 **Emoji Style:** ${brandContext.emoji_style || 'moderate'}
 **Post Length:** ${brandContext.post_length_pref || 'medium'}
 
