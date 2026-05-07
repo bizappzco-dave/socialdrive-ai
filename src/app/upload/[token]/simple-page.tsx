@@ -228,6 +228,11 @@ export default function SimpleUploadPage() {
             <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
               Drop 3-5 photos here. We'll make them look amazing!
             </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 sm:mb-6">
+              <p className="text-sm text-blue-800">
+                💡 <strong>Pro tip:</strong> Vertical/portrait photos work best for Instagram (like phone photos). We'll optimize them automatically!
+              </p>
+            </div>
             
             {/* Drag & Drop Zone */}
             <div
