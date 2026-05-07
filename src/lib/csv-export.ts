@@ -5,14 +5,18 @@
  * 
  * CSV Format:
  * Message,Link,ImageURL,VideoURL,Month,Day,Year,Hour,Minute,PinTitle,Category,Watermark,HashtagGroup,VideoThumbnailURL,CTAGroup,FirstComment,Story,PinBoard,AltText,PostPreset,TeamNote
+ * 
+ * For Carousels: ImageURL contains comma-separated list of image URLs
  */
 
 interface PostData {
   id: string
   caption_text: string
-  image_url?: string      // For images only
-  video_url?: string      // For videos/carousels
-  post_type?: 'image' | 'carousel' | 'video'  // NEW: Upload type
+  image_url?: string      // For single images
+  video_url?: string      // For videos
+  carousel_images?: string[]  // For carousels (comma-separated in CSV)
+  post_type?: 'image' | 'carousel' | 'video'  // Upload type
+  submission_id?: string  // To fetch carousel images
   hashtags?: string[]
   selected_at?: string
 }
@@ -149,9 +153,23 @@ export function generateSociamonialsCSV(
       : post.caption_text
     
     // Handle different post types
-    const isVideo = post.post_type === 'video' || post.post_type === 'carousel'
-    const imageUrl = isVideo ? '' : (post.image_url || '')
-    const videoUrl = isVideo ? (post.video_url || post.image_url || '') : ''
+    let imageUrl = ''
+    let videoUrl = ''
+    
+    if (post.post_type === 'carousel') {
+      // For carousels: comma-separated image URLs in ImageURL field
+      if (post.carousel_images && post.carousel_images.length > 0) {
+        imageUrl = post.carousel_images.join(',')
+      } else if (post.image_url) {
+        // Fallback: use single image_url if carousel_images not populated
+        imageUrl = post.image_url
+      }
+    } else if (post.post_type === 'video') {
+      videoUrl = post.video_url || post.image_url || ''
+    } else {
+      // Single image post
+      imageUrl = post.image_url || ''
+    }
     
     const row: SociamonialsCSVRow = {
       Message: escapeCSVField(fullCaption),
@@ -174,7 +192,7 @@ export function generateSociamonialsCSV(
       PinterestBoard: '',
       AltText: '',
       PostPreset: 'Default',
-      TeamNote: options?.teamNote || (post.post_type ? `Type: ${post.post_type}` : '')
+      TeamNote: options?.teamNote || (post.post_type ? `Type: ${post.post_type} (${post.post_type === 'carousel' ? 'multiple images' : 'single'})` : '')
     }
     
     rows.push(

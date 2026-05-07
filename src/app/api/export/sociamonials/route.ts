@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     // Get selected posts
     let postsQuery = supabase
       .from('posts')
-      .select('id, caption_text, image_url, hashtags, selected_at')
+      .select('id, caption_text, image_url, post_type, hashtags, selected_at, submission_id')
       .eq('client_id', clientId)
       .eq('selected', true)
       .eq('deleted', false)
@@ -74,8 +74,30 @@ export async function GET(request: NextRequest) {
       )
     }
     
+    // For carousel posts, fetch all images from submission_images
+    const postsWithCarouselImages = await Promise.all(
+      posts.map(async (post) => {
+        if (post.post_type === 'carousel' && post.submission_id) {
+          // Fetch all images for this submission
+          const { data: images } = await supabase
+            .from('submission_images')
+            .select('url')
+            .eq('submission_id', post.submission_id)
+            .order('created_at', { ascending: true })
+          
+          if (images && images.length > 0) {
+            return {
+              ...post,
+              carousel_images: images.map(img => img.url),
+            }
+          }
+        }
+        return post
+      })
+    )
+    
     // Generate CSV
-    const csvContent = generateSociamonialsCSV(posts, client.name, preferences, {
+    const csvContent = generateSociamonialsCSV(postsWithCarouselImages, client.name, preferences, {
       scheduleType,
       includeFirstComment: false,
       teamNote: `Exported from SocialDrive AI on ${new Date().toISOString().slice(0, 10)}`
