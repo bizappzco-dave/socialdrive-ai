@@ -492,7 +492,6 @@ export default function UploadPage() {
             <div
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
               className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition-colors"
             >
               <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -502,6 +501,13 @@ export default function UploadPage() {
               <p className="text-sm text-gray-500">
                 JPG, PNG, WebP • {uploadType === 'images' && '3-5 images'}{uploadType === 'carousel' && '3-10 images'}{uploadType === 'video' && '3-20 images'}
               </p>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                📁 Select Files
+              </button>
               <input
                 ref={fileInputRef}
                 type="file"
