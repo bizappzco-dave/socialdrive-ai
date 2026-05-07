@@ -310,28 +310,28 @@ export async function POST(
         if (stderr) console.log('Media generation errors:', stderr)
         
         // Parse output to get generated file paths
-        // Format: "✓ Generated for: instagram,tiktok | Size: 1080x1350 | File: /tmp/carousel-xxx_1080x1350.gif"
+        // Format: "✓ Created GIF: /tmp/carousel_1080x1350.gif"
         const outputLines = stdout.split('\n')
         for (const line of outputLines) {
-          if (line.includes('✓ Generated') || line.includes('File:')) {
-            // Extract platform, size, and file path
-            const platformMatch = line.match(/for: ([\w,]+)/)
+          if (line.includes('✓ Created GIF:') || line.includes('✓ Generated')) {
+            // Extract file path
+            const fileMatch = line.match(/: ([\/\w\-.]+\.gif)/)
             const sizeMatch = line.match(/Size: (\d+x\d+)/)
-            const fileMatch = line.match(/File: ([\/\w\-.]+)/)
+            const platformMatch = line.match(/for: ([\w,]+)/)
             
-            if (platformMatch && sizeMatch && fileMatch) {
-              const platformList = platformMatch[1].split(',')
-              const size = sizeMatch[1]
+            if (fileMatch) {
               const filePath = fileMatch[1]
+              const size = sizeMatch ? sizeMatch[1] : '1080x1350'
+              const platformList = platformMatch ? platformMatch[1].split(',') : ['instagram']
               
               // Determine format name from size
-              let formatName = 'Unknown'
+              let formatName = 'Portrait'
               if (size === '1080x1350') formatName = 'Portrait'
               else if (size === '1080x1920') formatName = 'Vertical'
               else if (size === '1080x1080') formatName = 'Square'
               
               generatedMediaUrls.push({
-                platform: platformList[0], // Use first platform
+                platform: platformList[0],
                 format: formatName,
                 size: size,
                 url: filePath
