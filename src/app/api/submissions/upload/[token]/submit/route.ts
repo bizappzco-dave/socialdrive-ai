@@ -341,26 +341,62 @@ export async function POST(
         
         console.log(`✓ Generated ${generatedMediaUrls.length} format(s):`, generatedMediaUrls)
         
-        // TODO: Upload generated files to Supabase Storage
-        // For now, use local paths (will work for testing)
-        // In production, upload to Supabase and use those URLs
+        // Upload generated video to Supabase Storage
+        let uploadedVideoUrl: string | null = null
+        
+        if (generatedMediaUrls.length > 0 && type === 'video') {
+          try {
+            const primaryFormat = generatedMediaUrls[0]
+            const videoPath = primaryFormat.url
+            
+            console.log('Uploading video to Supabase Storage...', videoPath)
+            
+            // Read the generated video file
+            const fs = await import('fs')
+            const videoBuffer = fs.readFileSync(videoPath)
+            
+            // Upload to Supabase
+            const filename = `videos/${submission.id}/${submission.id}.mp4`
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('submissions')
+              .upload(filename, videoBuffer, {
+                contentType: 'video/mp4',
+                cacheControl: '3600',
+                upsert: true,
+              })
+            
+            if (uploadError) {
+              console.error('Failed to upload video:', uploadError)
+              throw uploadError
+            }
+            
+            // Get public URL
+            const { data: { publicUrl } } = supabase.storage
+              .from('submissions')
+              .getPublicUrl(filename)
+            
+            uploadedVideoUrl = publicUrl
+            console.log('✓ Video uploaded to:', publicUrl)
+          } catch (uploadError: any) {
+            console.error('✗ Video upload failed:', uploadError.message)
+            // Continue anyway - posts will use local path as fallback
+          }
+        }
         
         // Update posts with the generated media URLs
         if (allPosts.length > 0 && generatedMediaUrls.length > 0) {
-          // Use the first generated format as primary video_url
-          const primaryFormat = generatedMediaUrls[0]
+          // Use uploaded URL or fallback to local path
+          const videoUrl = uploadedVideoUrl || generatedMediaUrls[0].url
           
           await supabase
             .from('posts')
             .update({ 
-              video_url: primaryFormat.url,
+              video_url: videoUrl,
               post_type: type,
-              // Store all formats in metadata for future use
-              // metadata: { formats: generatedMediaUrls }
             })
             .in('id', allPosts.map(p => p.id))
           
-          console.log(`✓ Updated posts with video URL:`, primaryFormat.url)
+          console.log(`✓ Updated posts with video URL:`, videoUrl)
         }
         
       } catch (mediaError: any) {
