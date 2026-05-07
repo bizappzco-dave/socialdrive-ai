@@ -1,15 +1,15 @@
 {
   "build": {
     "env": {
-      "ANTHROPIC_API_KEY": "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",
-      "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxaG54emFrdG5lamFzcWxmcmpmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzYzNzk0NCwiZXhwIjoyMDkzMjEzOTQ0fQ.fN3J5CIs5BMuSCYNFBvV0ZLPHGhyyeNdtdOjUA59soY",
+      "ANTHROPIC_API_KEY": "",
+      "SUPABASE_SERVICE_ROLE_KEY": "",
       "NEXT_PUBLIC_SUPABASE_URL": "https://dqhnxzaktnejasqlfrjf.supabase.co",
-      "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxaG54emFrdG5lamFzcWxmcmpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU1MjMyMzQsImV4cCI6MjA2MTEwNjQzNH0.Y1G1KqU8R3bDlFPLCr1gNvS8hQb9soY",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY": "REDACTED",
       "NEXTAUTH_URL": "https://socialdrive-ai.vercel.app"
     }
   },
   "env": {
-    "ANTHROPIC_API_KEY": "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",
-    "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxaG54emFrdG5lamFzcWxmcmpmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzYzNzk0NCwiZXhwIjoyMDkzMjEzOTQ0fQ.fN3J5CIs5BMuSCYNFBvV0ZLPHGhyyeNdtdOjUA59soY"
+    "ANTHROPIC_API_KEY": "",
+    "SUPABASE_SERVICE_ROLE_KEY": ""
   }
 }

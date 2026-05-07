@@ -8,14 +8,13 @@ import { generateCaption as generateOllamaCaption, generatePostVariations } from
 
 // Lazy initialization - create client when needed, not at module load time
 function getAnthropicClient(): Anthropic | null {
-  // TEMPORARY: Hardcode key for debugging
-  const apiKey = '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'
+  const apiKey = process.env.ANTHROPIC_API_KEY
   
   if (!apiKey) {
     console.error('ANTHROPIC_API_KEY not configured')
     return null
   }
-  console.log('Creating Anthropic client with hardcoded key, length:', apiKey.length)
+  console.log('Creating Anthropic client with key length:', apiKey.length)
   return new Anthropic({ apiKey })
 }
 
