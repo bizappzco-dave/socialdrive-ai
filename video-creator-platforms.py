@@ -231,7 +231,7 @@ def main():
     
     elif args.mode == 'gif':
         # Simple GIF generation (backward compatible)
-        size = (1080, 1080)  # Default square
+        size = (1080, 1350)  # Default portrait (Instagram best practice)
         success = create_animated_gif(args.images, args.output, args.duration, size)
         
         if not success:

@@ -395,7 +395,7 @@ export default function UploadPage() {
                 )}
                 <span className="font-medium text-gray-900">Instagram</span>
                 <span className="text-sm text-gray-500 ml-auto">
-                  {uploadType === 'carousel' ? '1080×1080 (Square)' : uploadType === 'video' ? '1080×1920 (Vertical)' : 'Feed posts'}
+                  {uploadType === 'carousel' ? '1080×1350 (Portrait) ⭐' : uploadType === 'video' ? '1080×1920 (Vertical)' : 'Feed posts'}
                 </span>
               </label>
               
@@ -426,7 +426,7 @@ export default function UploadPage() {
                 )}
                 <span className="font-medium text-gray-900">Facebook</span>
                 <span className="text-sm text-gray-500 ml-auto">
-                  {uploadType === 'carousel' ? '1080×1080 (Square)' : uploadType === 'video' ? '1080×1920 (Vertical)' : 'Feed posts'}
+                  {uploadType === 'carousel' ? '1080×1350 (Portrait)' : uploadType === 'video' ? '1080×1920 (Vertical)' : 'Feed posts'}
                 </span>
               </label>
               
