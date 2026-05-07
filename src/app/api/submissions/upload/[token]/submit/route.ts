@@ -297,6 +297,7 @@ export async function POST(
         const baseOutputPath = `/tmp/${type}-${submission.id}`
         
         // Use the new video-creator-platforms.py script
+        // Note: Video mode currently generates GIF (MP4 coming soon)
         const command = `cd /home/dpmcg/.openclaw/workspace/socialdrive-ai && \
           python3 video-creator-platforms.py ${type} ${imagePaths} \
           --platforms ${platformArg} \
@@ -351,16 +352,20 @@ export async function POST(
             
             console.log('Uploading video to Supabase Storage...', videoPath)
             
-            // Read the generated video file
+            // Read the generated video file (GIF for now, MP4 coming soon)
             const fs = await import('fs')
             const videoBuffer = fs.readFileSync(videoPath)
             
+            // Determine file extension from path
+            const fileExt = videoPath.endsWith('.gif') ? 'gif' : 'mp4'
+            const contentType = fileExt === 'gif' ? 'image/gif' : 'video/mp4'
+            
             // Upload to Supabase
-            const filename = `videos/${submission.id}/${submission.id}.mp4`
+            const filename = `videos/${submission.id}/${submission.id}.${fileExt}`
             const { data: uploadData, error: uploadError } = await supabase.storage
               .from('submissions')
               .upload(filename, videoBuffer, {
-                contentType: 'video/mp4',
+                contentType: contentType,
                 cacheControl: '3600',
                 upsert: true,
               })
@@ -376,7 +381,7 @@ export async function POST(
               .getPublicUrl(filename)
             
             uploadedVideoUrl = publicUrl
-            console.log('✓ Video uploaded to:', publicUrl)
+            console.log(`✓ Video uploaded to: ${publicUrl} (${fileExt})`)
           } catch (uploadError: any) {
             console.error('✗ Video upload failed:', uploadError.message)
             // Continue anyway - posts will use local path as fallback
