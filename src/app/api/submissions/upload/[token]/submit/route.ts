@@ -401,7 +401,18 @@ export async function POST(
             })
             .in('id', allPosts.map(p => p.id))
           
+          // ALSO update the submission with the video URL
+          await supabase
+            .from('submissions')
+            .update({
+              video_url: uploadedVideoUrl, // Use Supabase URL if uploaded, otherwise null
+            })
+            .eq('id', submission.id)
+          
           console.log(`✓ Updated posts with video URL:`, videoUrl)
+          if (uploadedVideoUrl) {
+            console.log(`✓ Updated submission with video URL:`, uploadedVideoUrl)
+          }
         }
         
       } catch (mediaError: any) {
