@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Copy, CheckCircle, Plus, ExternalLink, MessageCircle, Trash2 } from 'lucide-react'
+import { Copy, CheckCircle, Plus, ExternalLink, MessageCircle, Trash2, Settings } from 'lucide-react'
 
 interface Client {
   id: string
@@ -140,13 +140,22 @@ export default function AgencyClientsPage() {
                 Generate upload links for new clients
               </p>
             </div>
-            <button
-              onClick={() => router.push('/agency/clients/add')}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
-            >
-              <Plus className="h-4 w-4" />
-              Add Client
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.push('/agency/settings')}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200"
+              >
+                <Settings className="h-4 w-4" />
+                Settings
+              </button>
+              <button
+                onClick={() => router.push('/agency/clients/add')}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
+              >
+                <Plus className="h-4 w-4" />
+                Add Client
+              </button>
+            </div>
           </div>
         </div>
       </div>
