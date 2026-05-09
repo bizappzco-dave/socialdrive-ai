@@ -60,12 +60,23 @@ export async function generateCaptionHybrid(params: {
   const apiKey = process.env.ANTHROPIC_API_KEY
   const claudeEnabled = apiKey && !apiKey.includes('CHANGEME') && apiKey.length > 20
   
-  // Use Claude only for premium clients WITH valid key
+  // Use premium AI for premium clients WITH valid key
   if (params.clientTier === 'premium' && claudeEnabled) {
+    const model = claudeModel || 'claude-sonnet-4-5-20250929'
+    
+    // Route to Mistral if specified
+    if (model.includes('mistral')) {
+      console.log('Using Mistral Large 3 via Fireworks AI (premium tier)')
+      return generateWithMistral({
+        ...params,
+        model,
+      })
+    }
+    
     console.log('Using Claude API (premium tier)')
     return generateWithClaude({
       ...params,
-      model: claudeModel || 'claude-sonnet-4-5-20250929',
+      model,
     })
   }
   
@@ -151,6 +162,88 @@ async function generateWithClaude(params: {
   } catch (error: any) {
     console.error('Claude generation failed:', error.message)
     throw new Error(`Claude API error: ${error.message}`)
+  }
+}
+
+/**
+ * Generate caption using Mistral Large 3 via Fireworks AI with vision
+ */
+async function generateWithMistral(params: {
+  imageUrl: string
+  brandContext: BrandContext
+  model: string
+  briefText?: string
+}): Promise<GeneratedPost> {
+  const { brandContext, briefText, model } = params
+  
+  const apiKey = process.env.FIREWORKS_API_KEY
+  if (!apiKey) {
+    throw new Error('FIREWORKS_API_KEY not configured')
+  }
+  
+  console.log('Mistral API: Starting generation with model:', model)
+  
+  // Fetch and convert image to base64
+  const imageResponse = await fetch(params.imageUrl)
+  const imageBuffer = await imageResponse.arrayBuffer()
+  const base64Image = Buffer.from(imageBuffer).toString('base64')
+  const contentType = imageResponse.headers.get('content-type') || 'image/jpeg'
+  
+  // Build the prompt (reuse Claude prompt format)
+  const prompt = buildClaudePrompt(brandContext, briefText)
+  
+  try {
+    console.log('Mistral API: Calling Fireworks...')
+    const response = await fetch('https://api.fireworks.ai/inference/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'accounts/fireworks/models/mistral-large-3',
+        max_tokens: 500,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:${contentType};base64,${base64Image}`,
+              },
+            },
+            {
+              type: 'text',
+              text: prompt,
+            },
+          ],
+        }],
+      }),
+    })
+    
+    if (!response.ok) {
+      const error = await response.text()
+      throw new Error(`Mistral API error: ${response.status} ${error}`)
+    }
+    
+    const data = await response.json()
+    console.log('Mistral API: Success, received response')
+    
+    const responseText = data.choices[0]?.message?.content || ''
+    
+    // Parse Mistral's response (same format as Claude)
+    const parsed = parseClaudeResponse(responseText, brandContext)
+    
+    return {
+      caption: parsed.caption,
+      hashtags: parsed.hashtags,
+      style: parsed.style || 'premium',
+      emojiCount: parsed.emojiCount,
+    }
+    
+  } catch (error: any) {
+    console.error('Mistral generation failed:', error.message)
+    throw new Error(`Mistral API error: ${error.message}`)
   }
 }
 
