@@ -44,7 +44,8 @@ interface GeneratedPost {
 
 /**
  * Generate caption using appropriate AI based on client tier
- * TEMPORARY: Force all clients to use Claude for testing
+ * Default: Ollama Cloud (unlimited, qwen3.5:397b)
+ * Premium: Claude API (requires valid key)
  */
 export async function generateCaptionHybrid(params: {
   imageUrl: string
@@ -55,12 +56,22 @@ export async function generateCaptionHybrid(params: {
 }): Promise<GeneratedPost> {
   const { claudeModel } = params
   
-  // FORCE CLAUDE FOR ALL - testing
-  console.log('FORCE CLAUDE: Using Claude for all clients (testing mode)')
-  return generateWithClaude({
-    ...params,
-    model: claudeModel || 'claude-sonnet-4-5-20250929',
-  })
+  // Check if Claude API key is actually configured
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  const claudeEnabled = apiKey && !apiKey.includes('CHANGEME') && apiKey.length > 20
+  
+  // Use Claude only for premium clients WITH valid key
+  if (params.clientTier === 'premium' && claudeEnabled) {
+    console.log('Using Claude API (premium tier)')
+    return generateWithClaude({
+      ...params,
+      model: claudeModel || 'claude-sonnet-4-5-20250929',
+    })
+  }
+  
+  // Default to Ollama Cloud (unlimited, works for all tiers)
+  console.log('Using Ollama Cloud (qwen3.5:397b)')
+  return generateWithOllama(params)
 }
 
 /**

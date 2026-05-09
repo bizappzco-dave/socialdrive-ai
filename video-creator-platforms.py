@@ -83,16 +83,35 @@ def get_formats_for_platforms(platforms):
     
     return formats_needed
 
-def create_animated_gif(images, output_path, duration=800, size=(1080, 1350)):
-    """Create animated GIF from images with smart resizing"""
+def create_animated_gif(images, output_path, duration=800, size=(1080, 1350), max_frames=8, quality='high'):
+    """Create optimized animated GIF from images
+    
+    Args:
+        images: List of image paths
+        output_path: Output GIF path
+        duration: Duration per frame in ms
+        size: Target size (width, height)
+        max_frames: Maximum frames to include (reduces file size)
+        quality: 'low', 'medium', 'high' - affects palette and optimization
+    """
     if not PILLOW_AVAILABLE:
         print("❌ Pillow required")
         return False
     
     try:
+        # Limit frames to reduce file size
+        if len(images) > max_frames:
+            # Sample evenly from images
+            step = len(images) / max_frames
+            selected_indices = [int(i * step) % len(images) for i in range(max_frames)]
+            selected_images = [images[i] for i in selected_indices]
+            print(f"  ℹ️  Reduced from {len(images)} to {max_frames} frames")
+        else:
+            selected_images = images
+        
         frames = []
         
-        for img_path in images:
+        for img_path in selected_images:
             img = Image.open(img_path)
             
             # Smart resize with aspect ratio preservation
@@ -106,9 +125,27 @@ def create_animated_gif(images, output_path, duration=800, size=(1080, 1350)):
             elif img.mode != 'RGB':
                 img = img.convert('RGB')
             
+            # Enhance color/contrast slightly to compensate for GIF color loss
+            try:
+                from PIL import ImageEnhance
+                enhancer = ImageEnhance.Color(img)
+                img = enhancer.enhance(1.1)  # Slight color boost
+                enhancer = ImageEnhance.Contrast(img)
+                img = enhancer.enhance(1.05)  # Slight contrast boost
+            except:
+                pass  # Skip if ImageEnhance not available
+            
             frames.append(img)
         
-        # Save as GIF
+        # GIF optimization settings based on quality
+        palette_settings = {
+            'low': {'palette': Image.ADAPTIVE, 'colors': 128},
+            'medium': {'palette': Image.ADAPTIVE, 'colors': 192},
+            'high': {'palette': Image.ADAPTIVE, 'colors': 256},
+        }
+        settings = palette_settings.get(quality, palette_settings['high'])
+        
+        # Save as GIF with optimization and dithering for better color quality
         frames[0].save(
             output_path,
             format='GIF',
@@ -116,13 +153,21 @@ def create_animated_gif(images, output_path, duration=800, size=(1080, 1350)):
             append_images=frames[1:],
             duration=duration,
             loop=0,  # Infinite loop
-            optimize=True
+            optimize=True,
+            disposal=2,  # Clear previous frame for better transitions
+            **settings
         )
         
+        # Check file size
+        file_size = Path(output_path).stat().st_size / (1024 * 1024)  # MB
         print(f"✓ Created GIF: {output_path}")
         print(f"  - {len(frames)} frames")
         print(f"  - Size: {size[0]}x{size[1]}")
-        print(f"  - {duration}ms per frame")
+        print(f"  - File size: {file_size:.1f} MB")
+        
+        if file_size > 45:  # Warn if approaching 50MB limit
+            print(f"  ⚠️  Warning: File size approaching Supabase limit (50MB)")
+        
         return True
         
     except Exception as e:
@@ -175,7 +220,11 @@ def create_carousel(images, output_path, platforms=['instagram']):
         print(f"   Format: {format_info['name']} ({format_info['ratio']})")
         print(f"   Size: {size[0]}x{size[1]}")
         
-        success = create_animated_gif(images, output_file, duration=800, size=size)
+        # For video mode with many images, reduce frames and quality
+        max_frames = 5 if len(images) > 10 else 7
+        quality = 'low'  # Always use low quality for Supabase compatibility
+        
+        success = create_animated_gif(images, output_file, duration=800, size=size, max_frames=max_frames, quality=quality)
         
         if success:
             results.append({
