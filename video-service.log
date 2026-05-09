@@ -1,9 +1,0 @@
-============================================================
-🎬 SocialDrive AI - Video Generation Service
-============================================================
-Supabase URL: https://dqhnxzaktnejasqlfrjf.supabase.co...
-Poll interval: 30s
-Video creator: /home/dpmcg/.openclaw/workspace/socialdrive-ai/video-creator-platforms.py
-Started: 2026-05-08T08:35:35.982637
-============================================================
-❌ Failed to connect to Supabase: SUPABASE_SERVICE_ROLE_KEY not configured

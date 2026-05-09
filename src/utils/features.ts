@@ -86,7 +86,6 @@ export async function getClientFeatures(clientId: string): Promise<ClientFeature
 
 /**
  * Get the AI model to use based on client features
- * Options: ollama/qwen3.5 (default), claude-sonnet-4-5, claude-sonnet-4-6, mistral-large-3
  */
 export async function getAIModel(clientId: string): Promise<string> {
   const features = await getClientFeatures(clientId)
