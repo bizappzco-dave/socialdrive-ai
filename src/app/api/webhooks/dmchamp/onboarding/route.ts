@@ -50,9 +50,9 @@ interface DMChampPayload {
 const FIELD_MAP: Record<string, string> = {
   business_name: 'brand_name',
   website_url: 'website',
-  instagram_handle: 'instagram',
-  facebook_handle: 'facebook',
-  linkedin_handle: 'linkedin',
+  instagram_handle: 'instagram_handle',
+  facebook_handle: 'facebook_handle',
+  linkedin_handle: 'linkedin_handle',
   target_audience: 'target_audience',
   brand_tone: 'tone',
   usps: 'usps',
@@ -200,26 +200,41 @@ export async function POST(request: NextRequest) {
     }
 
     // Ensure platforms is an array
-    if (!brandContextData.platforms) {
+    if (!brandContextData.platforms || brandContextData.platforms.length === 0) {
       brandContextData.platforms = ['instagram'] // Default
     }
 
-    // Upsert brand context
+    // Insert or update brand context
     const { data: brandContext, error: contextError } = await supabase
       .from('brand_contexts')
-      .upsert({
+      .insert({
         ...brandContextData,
-      }, {
-        onConflict: 'client_id',
-        ignoreDuplicates: false,
       })
       .select()
       .single()
-
-    if (contextError) {
+    
+    // If conflict (client already has brand context), update instead
+    if (contextError && contextError.code === '23505') {
+      const { data: updatedContext, error: updateError } = await supabase
+        .from('brand_contexts')
+        .update(brandContextData)
+        .eq('client_id', clientId)
+        .select()
+        .single()
+      
+      if (updateError) {
+        console.error('Error updating brand context:', updateError)
+        return NextResponse.json(
+          { error: 'Failed to update brand context', details: updateError.message },
+          { status: 500 }
+        )
+      }
+      
+      brandContext = updatedContext
+    } else if (contextError) {
       console.error('Error saving brand context:', contextError)
       return NextResponse.json(
-        { error: 'Failed to save brand context' },
+        { error: 'Failed to save brand context', details: contextError.message },
         { status: 500 }
       )
     }
