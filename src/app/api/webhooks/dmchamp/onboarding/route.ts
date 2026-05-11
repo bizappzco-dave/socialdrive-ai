@@ -205,7 +205,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert or update brand context
-    const { data: brandContext, error: contextError } = await supabase
+    let brandContext: any = null
+    let contextError: any = null
+    
+    const result = await supabase
       .from('brand_contexts')
       .insert({
         ...brandContextData,
@@ -213,24 +216,27 @@ export async function POST(request: NextRequest) {
       .select()
       .single()
     
+    brandContext = result.data
+    contextError = result.error
+    
     // If conflict (client already has brand context), update instead
     if (contextError && contextError.code === '23505') {
-      const { data: updatedContext, error: updateError } = await supabase
+      const updateResult = await supabase
         .from('brand_contexts')
         .update(brandContextData)
         .eq('client_id', clientId)
         .select()
         .single()
       
-      if (updateError) {
-        console.error('Error updating brand context:', updateError)
+      if (updateResult.error) {
+        console.error('Error updating brand context:', updateResult.error)
         return NextResponse.json(
-          { error: 'Failed to update brand context', details: updateError.message },
+          { error: 'Failed to update brand context', details: updateResult.error.message },
           { status: 500 }
         )
       }
       
-      brandContext = updatedContext
+      brandContext = updateResult.data
     } else if (contextError) {
       console.error('Error saving brand context:', contextError)
       return NextResponse.json(
