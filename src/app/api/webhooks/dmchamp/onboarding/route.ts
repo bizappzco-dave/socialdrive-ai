@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/admin'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 // ============================================
 // DM CHAMP WEBHOOK HANDLER
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Find or create client by phone number
-    const supabase = createClient()
+    const supabase = createAdminClient()
     const phone = payload.contact.phone.replace(/\s/g, '').replace(/^\+/, '')
 
     // Search for existing client by phone (stored in metadata or notes)
