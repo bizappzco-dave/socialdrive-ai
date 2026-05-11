@@ -344,6 +344,74 @@ within 24 hours.
 
 ---
 
+## 🔄 Webhook Integration (API)
+
+DM Champ supports full webhook functionality for automated data sync.
+
+### Supported Webhooks
+
+**Outbound (DM Champ → External):**
+- `contact.created` - New contact added
+- `contact.updated` - Contact details changed
+- `contact.tagged` - Tag applied to contact
+- `message.received` - Incoming WhatsApp message
+- `message.sent` - Outbound message delivered
+- `flow.completed` - Chat flow finished
+
+**Inbound (External → DM Champ):**
+- Send message to contact
+- Update contact custom fields
+- Add/remove tags
+- Trigger chat flow
+
+### SocialDrive Integration Enpoints
+
+**SocialDrive → DM Champ:**
+```
+POST https://dmchamp-api.com/v1/contacts
+{
+  "phone": "+353871234567",
+  "first_name": "David",
+  "custom_fields": {
+    "client_id": "uuid-from-socialdrive",
+    "upload_url": "https://socialdrive-ai.vercel.app/upload/abc123",
+    "content_ready": true
+  },
+  "tags": ["SocialDrive Client"]
+}
+```
+
+**DM Champ → SocialDrive (Webhook):**
+```
+POST https://socialdrive-ai.vercel.app/api/webhooks/dmchamp
+{
+  "event": "flow.completed",
+  "contact": {
+    "phone": "+353871234567",
+    "custom_fields": {
+      "business_name": "No Label Barber"
+    }
+  }
+}
+```
+
+### Use Cases
+
+1. **Auto-create contact in DM Champ** when a client signs up in SocialDrive
+2. **Auto-update brand profile** in SocialDrive when onboarding completes in DM Champ
+3. **Send WhatsApp notification** from DM Champ when content is ready in SocialDrive
+4. **Sync tags** across both platforms (e.g., "Premium Client", "Onboarded")
+
+### Setup
+
+1. In DM Champ: Settings → Integrations → Webhooks
+2. Add SocialDrive webhook URL
+3. Select events to listen for
+4. Test with sample payload
+5. Verify data flows correctly
+
+---
+
 **This is your secret weapon for premium positioning.** 🎯
 
 Clients think you're doing deep brand discovery. In reality, it's automated and takes 10 minutes.
