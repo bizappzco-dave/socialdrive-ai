@@ -88,6 +88,53 @@ Quick calls when needed — but we keep meetings short and rare
 
 Customers don't have to chase us. We check in proactively.
 
+## DM Champ Onboarding Questions
+
+When a new client signs up for Social-Chats AI or Social-Drive AI, ask these 12 questions to gather their brand profile:
+
+1. **Business name** — What's your official business name?
+2. **Website URL** — Do you have a website? (if yes, what's the URL)
+3. **Instagram handle** — What's your Instagram username?
+4. **Facebook page** — Do you have a Facebook business page? (optional)
+5. **LinkedIn** — Are you on LinkedIn? (optional)
+6. **Target audience** — Who are your ideal customers? (age, location, interests, job titles, etc.)
+7. **Brand tone** — How would you describe your brand voice? (professional, friendly, fun, luxury, down-to-earth, etc.)
+8. **What makes you unique** — What do customers love about you? What sets you apart from competitors?
+9. **Main competitors** — Who are your top 2-3 competitors? (businesses you compete with directly)
+10. **Words/phrases to USE** — Are there specific words, phrases, or messaging we should always use?
+11. **Words/phrases to AVOID** — Are there words, phrases, or topics we should never use?
+12. **Content preferences** — What type of content do you prefer? (photos, before/after shots, team spotlights, customer testimonials, behind-the-scenes, etc.)
+
+**After completing:** "Thanks! We'll set up your account and send you a link to start uploading photos. You'll get your first AI-generated captions within 24 hours!"
+
+## SurveyChamp (QR Code Surveys)
+
+**New product for retail, hospitality, and supermarket chains**
+
+WhatsApp survey bot triggered by QR codes in-store. Customers scan a QR code, answer 5 quick questions to enter a prize draw (e.g., "Win a free week's shopping worth €300"). Businesses get real-time customer insights, contact details, and sentiment analysis.
+
+**How it works:**
+1. Customer scans QR code in store (on receipts, posters, shelf tags, bags)
+2. WhatsApp bot starts: "Hi! Welcome to [Store] Survey! 5 questions = Entry"
+3. Bot asks 5 questions (2-3 min total): shopping frequency, what they bought, experience rating, improvements, recommendation likelihood
+4. Customer enters name + email for prize draw
+5. Data saved to Supabase + real-time dashboard
+6. Supermarket gets insights: live responses, sentiment analysis, common complaints, export to CSV
+
+**Pricing:**
+- Single campaign: €599 (2 weeks, 1 store, up to 1000 entries)
+- Multi-store: €1999 (up to 10 stores, 1 month, unlimited entries)
+- Chain-wide: €4999 (all stores, 1 month, dedicated dashboard)
+- Monthly subscription: €999/mo (ongoing campaigns, A/B testing, trends)
+
+**Add-ons:**
+- Winner selection + notification: €199
+- Custom questions (AI-generated): €99
+- Sentiment analysis report: €299
+- Competitor benchmarking: €499
+
+**Best for:** Supermarkets (Tesco, Dunnes, SuperValu, Aldi, Lidl), retail chains, hospitality groups, any business with physical locations wanting customer feedback.
+
 3. Our products
 
 Taskifi-AI has five core products. They can be used individually or bundled. Each one solves one specific problem a busy business owner has.
@@ -310,19 +357,32 @@ All our pricing is transparent and based on the product, not hourly rates. Prici
 
 Products on monthly plans require the first 3 months' payments in advance.
 
-[TO BE COMPLETED — please add specific pricing for each product. Example structure:]
+## Current Pricing (May 2026)
 
-Local-Sites: from €69/month ( service not available to all clients)
+All our pricing is transparent and based on the product, not hourly rates. Products on monthly plans require the first 3 months' payments in advance.
 
-Lite-Sites: from €189/month, hosting and updates included.
+| Product | Monthly | Setup |
+|---------|---------|-------|
+| **Lite-Sites** | €49/mo | Free |
+| **Social-Drive AI** | €29/mo | Free |
+| **Maps 3-Pack** | €99/mo | €299 |
+| **Social-Chats AI** | €79/mo | €199 |
+| **Social-Lites** | €29/mo | Free |
 
-Social-Lites: from €99/month, hosting and updates included.
+**Bundles:**
+- **Starter** (Lite-Sites + Social-Drive AI): €69/mo
+- **Growth** (Lite-Sites + Social-Chats AI): €119/mo
+- **Complete** (All 5 products): €249/mo
 
-Social-Chats: from €149/month
+**Payment:** First 3 months upfront, then monthly. Cancel anytime.
 
-Social-Drive AI: from €69/month
+## Service Area
 
-Bundle discounts available when combining two or more products
+**Primary:** Ireland (all counties)
+**Secondary:** United Kingdom
+**Remote:** Any English-speaking market (case-by-case)
+
+All services delivered remotely — no geographic limitations.
 
 6. Frequently asked questions
 
@@ -368,7 +428,7 @@ A: Some of our products don't need social media at all — Local-Sites and Lite-
 
 Q: Do you work with businesses outside Ireland / the UK?
 
-A: [TO BE COMPLETED — please confirm your service area.] Yes, we work with small and local businesses in [regions].
+A: Yes, we work with small and local businesses in Ireland (all counties), the United Kingdom, and select English-speaking markets. All services are delivered remotely, so geographic location is not a limitation.
 
 Q: Can I just buy one product?
 
@@ -376,7 +436,7 @@ A: Absolutely. Each product is sold on its own. Many customers start with one an
 
 Q: What kind of businesses have you worked with?
 
-A: [TO BE COMPLETED — please add a few example industries or case studies once available, e.g., "We've worked with salons, cafés, electricians, dentists, fitness studios, and small retailers across [region]."]
+A: We've worked with salons, cafés, electricians, dentists, fitness studios, small retailers, kitchens & showrooms, barbershops, and professional services across Ireland and the UK. Every business is different, but they all share one thing in common: they're too busy running their business to handle marketing themselves.
 
 Q: How do I get started?
 
@@ -384,7 +444,7 @@ A: The easiest way is a 15-minute discovery chat — we'll understand your busin
 
 Q: Can I see examples of your work?
 
-A: [TO BE COMPLETED — please add links to portfolio examples or case studies once available.]
+A: We have live examples across all our products. Visit taskifiai.com to see current product demos. For specific case studies relevant to your industry, book a discovery chat and we'll share examples from similar businesses.
 
 7. Tone of voice
 

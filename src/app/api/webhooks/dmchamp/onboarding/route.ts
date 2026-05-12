@@ -89,6 +89,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Support multiple event types
+    const supportedEvents = ['flow.completed', 'contact.updated', 'contact.created', 'contact.tagged']
+    if (!supportedEvents.includes(payload.event)) {
+      return NextResponse.json(
+        { error: `Unsupported event type: ${payload.event}. Supported: ${supportedEvents.join(', ')}` },
+        { status: 400 }
+      )
+    }
+
     console.log('🔔 DM Champ webhook received:', {
       event: payload.event,
       phone: payload.contact.phone,
@@ -323,7 +332,7 @@ export async function GET(request: NextRequest) {
     status: 'ok',
     webhook: 'dmchamp/onboarding',
     version: '1.0.0',
-    supported_events: ['flow.completed', 'contact.tagged', 'contact.updated'],
+    supported_events: ['flow.completed', 'contact.updated', 'contact.created', 'contact.tagged'],
     documentation: 'https://socialdrive-ai.vercel.app/docs/webhooks/dmchamp',
   })
 }
