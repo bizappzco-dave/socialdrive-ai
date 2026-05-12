@@ -79,12 +79,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const payload: DMChampPayload = await request.json()
+    const payload: any = await request.json()
 
-    // Validate payload structure
+    // Log the raw payload for debugging
+    console.log('🔔 DM Champ webhook received (RAW):', JSON.stringify(payload, null, 2))
+
+    // Handle test payloads from DM Champ
+    if (payload.test === true || payload.event === 'test') {
+      console.log('✅ Test payload received - returning success')
+      return NextResponse.json({
+        success: true,
+        message: 'Test webhook received successfully',
+        received_at: new Date().toISOString(),
+      })
+    }
+
+    // Validate payload structure (skip for test payloads)
     if (!payload.contact?.phone) {
       return NextResponse.json(
-        { error: 'Missing contact phone number' },
+        { error: 'Missing contact phone number', received_payload: payload },
         { status: 400 }
       )
     }
@@ -93,7 +106,7 @@ export async function POST(request: NextRequest) {
     const supportedEvents = ['flow.completed', 'contact.updated', 'contact.created', 'contact.tagged']
     if (!supportedEvents.includes(payload.event)) {
       return NextResponse.json(
-        { error: `Unsupported event type: ${payload.event}. Supported: ${supportedEvents.join(', ')}` },
+        { error: `Unsupported event type: ${payload.event}. Supported: ${supportedEvents.join(', ')}`, received_payload: payload },
         { status: 400 }
       )
     }
