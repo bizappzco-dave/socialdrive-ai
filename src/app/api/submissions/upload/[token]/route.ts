@@ -11,6 +11,7 @@ export async function GET(
   { params }: { params: { token: string } }
 ) {
   try {
+    console.log('Looking up token:', params.token)
     const supabase = createAdminClient()
     
     const { data: submission, error } = await supabase
@@ -19,25 +20,31 @@ export async function GET(
       .eq('upload_token', params.token)
       .single()
     
+    console.log('Query result:', { submission, error })
+    
     if (error || !submission) {
-      console.error('Submission not found:', error)
+      console.error('Submission not found:', { error, submission })
       return NextResponse.json(
-        { error: 'Invalid or expired upload link' },
+        { error: 'Invalid or expired upload link', details: error?.message, hasSubmission: !!submission },
         { status: 404 }
       )
     }
     
     // Get client info separately
-    const { data: client } = await supabase
+    const { data: client, error: clientError } = await supabase
       .from('clients')
-      .select('id, name, tier, features')
+      .select('id, name, features')
       .eq('id', submission.client_id)
       .single()
+    
+    if (clientError) {
+      console.error('Failed to get client:', clientError)
+    }
     
     // Return submission with client tier info
     return NextResponse.json({
       ...submission,
-      client_tier: client?.tier || 'simple',
+      client_tier: 'simple', // Default to simple since tier column doesn't exist
       client_features: client?.features || {},
       client: client
     })
