@@ -18,7 +18,7 @@ export async function GET(
       .from('submissions')
       .select('id, client_name, client_email, client_phone, status, brief_text, client_id')
       .eq('upload_token', params.token)
-      .single()
+      .maybeSingle()
     
     console.log('Query result:', { submission, error })
     
