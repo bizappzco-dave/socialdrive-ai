@@ -11,14 +11,27 @@ export async function GET(
   { params }: { params: { token: string } }
 ) {
   try {
-    console.log('Looking up token:', params.token)
+    console.log('=== SUBMISSION LOOKUP DEBUG ===')
+    console.log('Token from URL:', params.token)
+    console.log('Token length:', params.token?.length)
+    console.log('Token type:', typeof params.token)
+    
     const supabase = createAdminClient()
+    console.log('Supabase client created')
     
     const { data: submission, error } = await supabase
       .from('submissions')
       .select('id, client_name, client_email, client_phone, status, brief_text, client_id')
       .eq('upload_token', params.token)
       .maybeSingle()
+    
+    console.log('Query executed')
+    console.log('Error:', error)
+    console.log('Submission:', submission ? 'FOUND' : 'NOT FOUND')
+    if (submission) {
+      console.log('Submission ID:', submission.id)
+    }
+    console.log('=== END DEBUG ===')
     
     console.log('Query result:', { submission, error })
     
