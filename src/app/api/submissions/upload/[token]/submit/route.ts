@@ -81,11 +81,14 @@ export async function POST(
       .from('submissions')
       .select('*, clients(*)')
       .eq('upload_token', params.token)
-      .single()
+      .maybeSingle()
+    
+    console.log('Submission lookup result:', { hasSubmission: !!submission, error: subError })
     
     if (subError || !submission) {
+      console.error('Submission not found:', { subError, submission })
       return NextResponse.json(
-        { error: 'Invalid submission' },
+        { error: 'Invalid submission', details: subError?.message },
         { status: 404 }
       )
     }
