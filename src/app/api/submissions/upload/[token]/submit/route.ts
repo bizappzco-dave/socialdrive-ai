@@ -79,7 +79,7 @@ export async function POST(
     // Get submission
     const { data: submission, error: subError } = await supabase
       .from('submissions')
-      .select('*, clients(*)')
+      .select('*')
       .eq('upload_token', params.token)
       .maybeSingle()
     
@@ -91,6 +91,17 @@ export async function POST(
         { error: 'Invalid submission', details: subError?.message },
         { status: 404 }
       )
+    }
+    
+    // Get client info separately
+    const { data: client, error: clientError } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('id', submission.client_id)
+      .single()
+    
+    if (clientError) {
+      console.error('Failed to get client:', clientError)
     }
     
     // Update submission status
