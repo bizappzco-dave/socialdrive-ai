@@ -20,10 +20,10 @@ export async function GET() {
     console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'configured' : 'MISSING')
     console.log('Service Role Key:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'configured' : 'MISSING')
     
-    // Get all clients with tier info
+    // Get all clients
     const { data: clients, error } = await supabase
       .from('clients')
-      .select('id, name, industry, tier')
+      .select('id, name, industry')
       .order('created_at', { ascending: false })
     
     if (error) {
