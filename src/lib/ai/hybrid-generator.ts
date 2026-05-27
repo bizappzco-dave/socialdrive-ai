@@ -249,47 +249,46 @@ async function generateWithLlamaVision(params: {
 }
 
 /**
- * Build prompt for Claude
+ * Build prompt for Claude/Kimi
  */
 function buildClaudePrompt(brandContext: BrandContext, briefText?: string): string {
-  return `You are a professional social media content creator specializing in the ${brandContext.industry || 'retail'} industry. Analyze the image and generate an engaging caption.
+  return `You are a professional social media content creator. Generate ONE engaging caption based on the image.
 
 ## Brand Context
-**Brand Name:** ${brandContext.brand_name}
-**Industry:** ${brandContext.industry}
-**Location:** ${brandContext.location}
-**Target Audience:** ${brandContext.target_audience}
-**Tone:** ${brandContext.tone}
-**Personality:** ${brandContext.personality}
-**CTA:** ${brandContext.cta || 'Contact us today'}
-**Emoji Style:** ${brandContext.emoji_style || 'moderate'}
-**Post Length:** ${brandContext.post_length_pref || 'medium'}
+- **Brand:** ${brandContext.brand_name}
+- **Industry:** ${brandContext.industry}
+- **Location:** ${brandContext.location}
+- **Tone:** ${brandContext.tone}
+- **CTA:** ${brandContext.cta || 'Contact us today'}
 
-${briefText ? `## Client Brief
-${briefText}
+${briefText ? `## Client Brief: ${briefText}` : ''}
 
-Incorporate this brief into the caption.` : ''}
+## Rules
+1. **ENGLISH ONLY** - no other languages
+2. **MAX 280 CHARACTERS** total (caption + hashtags + emojis)
+3. **NO explanations** - just the caption and hashtags
+4. **NO thinking out loud** - do not describe your reasoning
+5. **NO meta-commentary** - do not say "I'll create" or "Here's a caption"
+6. Use 1-2 emojis max
+7. Include 3-5 relevant hashtags
 
-## Guidelines
-- Write in ENGLISH ONLY - do not use any other languages
-- Describe what you see in the image specifically
-- **MAX 280 CHARACTERS** including hashtags and emojis (Sociamonials limit)
-- **Keep it short and punchy** - social media users scan, they don't read essays
-- Write in the brand's tone and personality
-- Include ${brandContext.emoji_style === 'freely' ? '2-3' : brandContext.emoji_style === 'sparingly' ? '1' : '1-2'} emojis (they count toward character limit!)
-- Use ${brandContext.post_length_pref === 'short' ? '1 sentence' : brandContext.post_length_pref === 'long' ? '2-3 short sentences' : '1-2 short sentences'}
-- Include a call-to-action
-- Make it engaging and authentic
+## Output Format - CRITICAL
+You MUST output ONLY this format, nothing else:
 
-## Standard Hashtags
-${Array.isArray(brandContext.hashtags) ? brandContext.hashtags.map(tag => `- ${tag}`).join('\n') : (brandContext.hashtags || '').split(' ').filter(t => t.trim()).map(tag => `- ${tag}`).join('\n')}
+CAPTION: [your caption here with emojis]
+HASHTAGS: #Tag1 #Tag2 #Tag3 #Tag4 #Tag5
 
-## Output Format
-Return in this exact format:
-CAPTION: [your caption here]
-HASHTAGS: [comma-separated hashtags]
+## Examples of CORRECT output:
+CAPTION: Transform your business with No Label Academy! 🚀 Expert training for Irish businesses. Book now!
+HASHTAGS: #LocalBusiness #Ireland #SmallBusiness #Training #NoLabelAcademy
 
-Do not include any other text.`
+## Examples of WRONG output (DO NOT DO THIS):
+❌ "The user wants me to create a caption..."
+❌ "Let me analyze the image..."
+❌ "I'll write a caption about..."
+❌ Any explanation or reasoning
+
+**Remember: Output ONLY the CAPTION and HASHTAGS lines. Nothing else.**`
 }
 
 /**
