@@ -270,22 +270,37 @@ ${briefText ? `## Client Brief: ${briefText}` : ''}
 4. **NO thinking out loud** - do not describe your reasoning
 5. **NO meta-commentary** - do not say "I'll create" or "Here's a caption"
 6. Use 1-2 emojis max
-7. Include 3-5 relevant hashtags
+7. **HASHTAGS MUST BE INDUSTRY-SPECIFIC** - not generic!
+
+## Hashtag Strategy - CRITICAL
+Generate 5-8 hashtags that are SPECIFIC to the industry/profession:
+
+**GOOD examples (specific):**
+- Barber: #BarberLife #FadeGame #MensHair #DublinBarber #HaircutGoals
+- Restaurant: #FoodieDublin #IrishFood #FreshIngredients #ChefLife #FoodPorn
+- Gym: #FitnessMotivation #GymLife #PersonalTrainer #StrengthTraining #FitnessIreland
+- Retail: #ShopLocal #RetailTherapy #SmallBiz #ShoppingAddict #NewArrivals
+
+**BAD examples (too generic - DO NOT USE):**
+- ❌ #LocalBusiness ❌ #Ireland ❌ #SmallBusiness ❌ #SupportLocal
 
 ## Output Format - CRITICAL
 You MUST output ONLY this format, nothing else:
 
 CAPTION: [your caption here with emojis]
-HASHTAGS: #Tag1 #Tag2 #Tag3 #Tag4 #Tag5
+HASHTAGS: #IndustryTag1 #IndustryTag2 #IndustryTag3 #IndustryTag4 #IndustryTag5
 
 ## Examples of CORRECT output:
-CAPTION: Transform your business with No Label Academy! 🚀 Expert training for Irish businesses. Book now!
-HASHTAGS: #LocalBusiness #Ireland #SmallBusiness #Training #NoLabelAcademy
+CAPTION: Fresh fades and good vibes at No Label Academy! ✂️ Book your cut today.
+HASHTAGS: #BarberLife #FadeGame #MensHair #DublinBarber #HaircutGoals
+
+CAPTION: Step into greatness at No Label Academy! 🚀 Expert training for Irish businesses. Book now!
+HASHTAGS: #BusinessTraining #ProfessionalDevelopment #SkillsTraining #CareerGrowth #LearnNewSkills
 
 ## Examples of WRONG output (DO NOT DO THIS):
 ❌ "The user wants me to create a caption..."
 ❌ "Let me analyze the image..."
-❌ "I'll write a caption about..."
+❌ #LocalBusiness #Ireland #SmallBusiness (too generic!)
 ❌ Any explanation or reasoning
 
 **Remember: Output ONLY the CAPTION and HASHTAGS lines. Nothing else.**`
