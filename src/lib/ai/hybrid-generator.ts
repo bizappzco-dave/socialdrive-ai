@@ -67,7 +67,7 @@ export async function generateCaptionHybrid(params: {
     // Route to Mistral if specified
     if (model.includes('mistral')) {
       console.log('Using Mistral Large 3 via Fireworks AI (premium tier)')
-      return generateWithMistral({
+      return generateWithLlamaVision({
         ...params,
         model,
       })
@@ -82,7 +82,7 @@ export async function generateCaptionHybrid(params: {
   
   // Default to Ollama Cloud (unlimited, works for all tiers)
   console.log('Using Ollama Cloud (qwen3.5:397b)')
-  return generateWithOllama(params)
+  return generateWithOllamaWrapper(params)
 }
 
 /**
