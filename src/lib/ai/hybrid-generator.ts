@@ -166,9 +166,9 @@ async function generateWithClaude(params: {
 }
 
 /**
- * Generate caption using Mistral Large 3 via Fireworks AI with vision
+ * Generate caption using Llama 3.2 Vision via Fireworks AI with vision
  */
-async function generateWithMistral(params: {
+async function generateWithLlamaVision(params: {
   imageUrl: string
   brandContext: BrandContext
   model: string
@@ -202,7 +202,7 @@ async function generateWithMistral(params: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'accounts/fireworks/models/mistral-large-3',
+        model: 'accounts/fireworks/models/kimi-k2p6',
         max_tokens: 500,
         messages: [{
           role: 'user',
@@ -224,11 +224,11 @@ async function generateWithMistral(params: {
     
     if (!response.ok) {
       const error = await response.text()
-      throw new Error(`Mistral API error: ${response.status} ${error}`)
+      throw new Error(`Fireworks Kimi K2.6 API error: ${response.status} ${error}`)
     }
     
     const data = await response.json()
-    console.log('Mistral API: Success')
+    console.log('Fireworks Kimi K2.6: Success')
     
     const responseText = data.choices[0]?.message?.content || ''
     
@@ -244,7 +244,7 @@ async function generateWithMistral(params: {
     
   } catch (error: any) {
     console.error('Mistral generation failed:', error.message)
-    throw new Error(`Mistral API error: ${error.message}`)
+    throw new Error(`Fireworks API error: ${error.message}`)
   }
 }
 
@@ -340,7 +340,7 @@ function parseClaudeResponse(response: string, brandContext: BrandContext): {
 
 /**
  * Generate multiple post variations with hybrid routing
- * TEMPORARY: Force all clients to use Claude for testing
+ * Routes to Ollama (standard) or Claude API (premium) based on client tier
  */
 export async function generatePostVariationsHybrid(params: {
   imageUrl: string
@@ -355,25 +355,79 @@ export async function generatePostVariationsHybrid(params: {
   
   const variations: GeneratedPost[] = []
   
-  // FORCE CLAUDE FOR ALL - testing
-  console.log('FORCE CLAUDE: Using Claude for all clients (testing mode)')
+  // Check if Claude is actually available
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  const claudeEnabled = apiKey && !apiKey.includes('CHANGEME') && apiKey.length > 20
   
-  // Generate all variations with Claude
+  // Check if Fireworks is available (Mistral)
+  const fireworksKey = process.env.FIREWORKS_API_KEY
+  const fireworksEnabled = fireworksKey && !fireworksKey.includes('CHANGEME') && fireworksKey.length > 20
+  
+  // Priority: Claude (premium) → Fireworks Mistral (standard) → Ollama (fallback)
+  const useClaude = params.clientTier === 'premium' && claudeEnabled
+  const useFireworks = !useClaude && fireworksEnabled
+  
+  console.log(`Hybrid routing: clientTier=${params.clientTier}, claudeEnabled=${claudeEnabled}, fireworksEnabled=${fireworksEnabled}`)
+  console.log(`Using: ${useClaude ? 'Claude' : useFireworks ? 'Fireworks Mistral' : 'Ollama'}`)
+  
+  // Generate all variations with appropriate AI
   for (let i = 0; i < count; i++) {
     try {
-      const result = await generateWithClaude({
-        ...params,
-        model: claudeModel || 'claude-sonnet-4-5-20250929',
-      })
-      variations.push(result)
-      console.log('✓ Claude variation', i + 1, 'generated')
+      if (useClaude) {
+        const result = await generateWithClaude({
+          ...params,
+          model: claudeModel || 'claude-sonnet-4-5-20250929',
+        })
+        variations.push(result)
+        console.log('✓ Claude variation', i + 1, 'generated')
+      } else if (useFireworks) {
+        const result = await generateWithLlamaVision({
+          ...params,
+          model: 'accounts/fireworks/models/kimi-k2p6',
+        })
+        variations.push(result)
+        console.log('✓ Fireworks Kimi K2.6 variation', i + 1, 'generated')
+      } else {
+        // Fall back to Ollama for standard tier or when Claude credits exhausted
+        const result = await generateWithOllamaWrapper(params)
+        variations.push(result)
+        console.log('✓ Ollama variation', i + 1, 'generated')
+      }
     } catch (error: any) {
-      console.error('✗ Claude variation', i + 1, 'failed:', error.message)
+      console.error('✗ Generation failed:', error.message)
       throw error
     }
   }
   
   return variations
+}
+
+/**
+ * Wrapper to call Ollama generatePostVariations with correct interface
+ */
+async function generateWithOllamaWrapper(params: {
+  imageUrl: string
+  brandContext: BrandContext
+  clientTier: 'standard' | 'premium'
+  claudeModel?: string
+  count?: number
+  styles?: string[]
+  briefText?: string
+}): Promise<GeneratedPost> {
+  // Use the existing Ollama generateCaption function
+  const result = await generateOllamaCaption({
+    imageUrl: params.imageUrl,
+    brandContext: params.brandContext,
+    platform: 'instagram',
+    briefText: params.briefText,
+  })
+  
+  return {
+    caption: result.caption,
+    hashtags: result.hashtags,
+    style: 'standard',
+    emojiCount: result.emojiCount,
+  }
 }
 
 /**
