@@ -252,14 +252,16 @@ async function generateWithLlamaVision(params: {
  * Build prompt for Claude/Kimi
  */
 function buildClaudePrompt(brandContext: BrandContext, briefText?: string): string {
-  return `You are a professional social media content creator. Generate ONE engaging caption based on the image.
+  return `You are a professional social media content creator for a BARBER ACADEMY. Generate ONE engaging caption based on the image.
 
-## Brand Context
+## Brand Context - THIS IS A BARBER ACADEMY
 - **Brand:** ${brandContext.brand_name}
-- **Industry:** ${brandContext.industry}
+- **Industry:** ${brandContext.industry} (BARBER/HAIR TRAINING - all captions must be about barbering)
 - **Location:** ${brandContext.location}
 - **Tone:** ${brandContext.tone}
 - **CTA:** ${brandContext.cta || 'Contact us today'}
+
+**CRITICAL: This is a barber academy that trains barbers. Even if the image shows cameras, lights, or studio equipment, this is for barber training content. All captions MUST be about barbering, hair cutting, fade training, or barber education.**
 
 ${briefText ? `## Client Brief: ${briefText}` : ''}
 
@@ -268,48 +270,49 @@ ${briefText ? `## Client Brief: ${briefText}` : ''}
 2. **MAX 280 CHARACTERS** total (caption + hashtags + emojis)
 3. **Output ONLY 2 lines** - CAPTION and HASHTAGS, nothing else
 4. **NEVER explain your reasoning** - no "The user wants...", no "Let me analyze..."
-5. **NEVER describe the image** - just create the caption
-6. Use 1-2 emojis max
-7. **HASHTAGS MUST BE INDUSTRY-SPECIFIC** - not generic!
+5. **NEVER describe what you see in the image** - just create the barber academy caption
+6. **ALWAYS assume this is about barbering** - even if image shows cameras/lights (it's for training videos)
+7. Use 1-2 emojis max
+8. **HASHTAGS MUST BE BARBER/HAIR INDUSTRY SPECIFIC** - not generic, not film/video!
 
 ## Hashtag Strategy - CRITICAL
-Generate 5-8 hashtags that are SPECIFIC to the industry/profession:
+Generate 5-8 hashtags that are SPECIFIC to barbering/hair training:
 
-**GOOD examples (specific):**
-- Barber: #BarberLife #FadeGame #MensHair #DublinBarber #HaircutGoals
-- Restaurant: #FoodieDublin #IrishFood #FreshIngredients #ChefLife #FoodPorn
-- Gym: #FitnessMotivation #GymLife #PersonalTrainer #StrengthTraining #FitnessIreland
-- Retail: #ShopLocal #RetailTherapy #SmallBiz #ShoppingAddict #NewArrivals
-- Film/Video: #FilmProduction #VideoProduction #StudioLife #ContentCreation #Filmmaker
+**GOOD examples (barber academy):**
+- #BarberAcademy #BarberTraining #BarberLife #FadeGame #MensHair #BarberSchool #HaircutTraining #BarberEducation #DublinBarber #LearnToCutHair
 
-**BAD examples (too generic - DO NOT USE):**
-- ❌ #LocalBusiness ❌ #Ireland ❌ #SmallBusiness ❌ #SupportLocal
+**GOOD examples (barber shop):**
+- #BarberLife #FadeGame #MensHair #DublinBarber #HaircutGoals #BarberShop #FreshFades #GroomingLife
+
+**BAD examples (wrong industry - DO NOT USE):**
+- ❌ #FilmProduction ❌ #VideoProduction ❌ #StudioLife (this is NOT a film studio!)
+- ❌ #LocalBusiness ❌ #Ireland ❌ #SmallBusiness (too generic!)
 
 ## Output Format - YOU MUST FOLLOW THIS EXACTLY
 You MUST output ONLY these 2 lines, nothing before, nothing after:
 
 CAPTION: [your caption here with emojis]
-HASHTAGS: #IndustryTag1 #IndustryTag2 #IndustryTag3 #IndustryTag4 #IndustryTag5
+HASHTAGS: #BarberTag1 #BarberTag2 #BarberTag3 #BarberTag4 #BarberTag5
 
 ## Examples of CORRECT output:
-CAPTION: Fresh fades and good vibes at No Label Academy! ✂️ Book your cut today.
-HASHTAGS: #BarberLife #FadeGame #MensHair #DublinBarber #HaircutGoals
+CAPTION: New barber just joined the No Label Academy team! ✂️ Ready to train the next generation of fades.
+HASHTAGS: #BarberAcademy #BarberTraining #BarberLife #FadeGame #DublinBarber
 
-CAPTION: Step into greatness at No Label Academy! 🚀 Expert training for Irish businesses. Book now!
-HASHTAGS: #BusinessTraining #ProfessionalDevelopment #SkillsTraining #CareerGrowth #LearnNewSkills
+CAPTION: Master the perfect fade at No Label Academy! 🚀 Expert barber training in Ireland. Book your course now!
+HASHTAGS: #BarberTraining #BarberSchool #LearnToCutHair #BarberEducation #CareerChange
 
 ## Examples of WRONG output (DO NOT DO THIS):
 ❌ "The user wants me to create a caption..."
-❌ "Let me analyze the image first..."
-❌ "Based on the image, I can see..."
-❌ #LocalBusiness #Ireland #SmallBusiness (too generic!)
+❌ "I can see studio lights and cameras..." (IRRELEVANT - it's for barber training videos!)
+❌ #FilmProduction #VideoProduction (WRONG INDUSTRY!)
+❌ #LocalBusiness #Ireland (too generic!)
 ❌ Any explanation, reasoning, or meta-commentary
 
 **CRITICAL: If you output anything other than the 2 lines above, the system will fail. ONLY output:
 CAPTION: [text]
 HASHTAGS: [tags]
 
-Nothing else. No explanations. No reasoning. Just the 2 lines.**`
+Nothing else. No explanations. No reasoning. Just the 2 lines. This is a BARBER ACADEMY - all captions about barbering!**`
 }
 
 /**
