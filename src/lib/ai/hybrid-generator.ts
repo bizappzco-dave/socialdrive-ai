@@ -263,12 +263,12 @@ function buildClaudePrompt(brandContext: BrandContext, briefText?: string): stri
 
 ${briefText ? `## Client Brief: ${briefText}` : ''}
 
-## Rules
+## Rules - FOLLOW EXACTLY
 1. **ENGLISH ONLY** - no other languages
 2. **MAX 280 CHARACTERS** total (caption + hashtags + emojis)
-3. **NO explanations** - just the caption and hashtags
-4. **NO thinking out loud** - do not describe your reasoning
-5. **NO meta-commentary** - do not say "I'll create" or "Here's a caption"
+3. **Output ONLY 2 lines** - CAPTION and HASHTAGS, nothing else
+4. **NEVER explain your reasoning** - no "The user wants...", no "Let me analyze..."
+5. **NEVER describe the image** - just create the caption
 6. Use 1-2 emojis max
 7. **HASHTAGS MUST BE INDUSTRY-SPECIFIC** - not generic!
 
@@ -280,12 +280,13 @@ Generate 5-8 hashtags that are SPECIFIC to the industry/profession:
 - Restaurant: #FoodieDublin #IrishFood #FreshIngredients #ChefLife #FoodPorn
 - Gym: #FitnessMotivation #GymLife #PersonalTrainer #StrengthTraining #FitnessIreland
 - Retail: #ShopLocal #RetailTherapy #SmallBiz #ShoppingAddict #NewArrivals
+- Film/Video: #FilmProduction #VideoProduction #StudioLife #ContentCreation #Filmmaker
 
 **BAD examples (too generic - DO NOT USE):**
 - ❌ #LocalBusiness ❌ #Ireland ❌ #SmallBusiness ❌ #SupportLocal
 
-## Output Format - CRITICAL
-You MUST output ONLY this format, nothing else:
+## Output Format - YOU MUST FOLLOW THIS EXACTLY
+You MUST output ONLY these 2 lines, nothing before, nothing after:
 
 CAPTION: [your caption here with emojis]
 HASHTAGS: #IndustryTag1 #IndustryTag2 #IndustryTag3 #IndustryTag4 #IndustryTag5
@@ -299,11 +300,16 @@ HASHTAGS: #BusinessTraining #ProfessionalDevelopment #SkillsTraining #CareerGrow
 
 ## Examples of WRONG output (DO NOT DO THIS):
 ❌ "The user wants me to create a caption..."
-❌ "Let me analyze the image..."
+❌ "Let me analyze the image first..."
+❌ "Based on the image, I can see..."
 ❌ #LocalBusiness #Ireland #SmallBusiness (too generic!)
-❌ Any explanation or reasoning
+❌ Any explanation, reasoning, or meta-commentary
 
-**Remember: Output ONLY the CAPTION and HASHTAGS lines. Nothing else.**`
+**CRITICAL: If you output anything other than the 2 lines above, the system will fail. ONLY output:
+CAPTION: [text]
+HASHTAGS: [tags]
+
+Nothing else. No explanations. No reasoning. Just the 2 lines.**`
 }
 
 /**
