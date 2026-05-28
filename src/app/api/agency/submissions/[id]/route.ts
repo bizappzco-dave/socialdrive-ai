@@ -12,49 +12,73 @@ export async function DELETE(
     )
 
     const submissionId = params.id
+    console.log('🗑️ Deleting submission:', submissionId)
 
-    // First, get all posts for this submission to delete images from storage
-    const { data: posts } = await supabase
+    // First, get all posts for this submission
+    const { data: posts, error: postsError } = await supabase
       .from('posts')
       .select('id, image_url')
       .eq('submission_id', submissionId)
 
-    // Delete images from Supabase storage
+    if (postsError) {
+      console.error('Error fetching posts:', postsError)
+      throw new Error('Failed to fetch posts')
+    }
+
+    console.log('Found', posts?.length || 0, 'posts to delete')
+
+    // Delete posts from database FIRST (foreign key constraint)
     if (posts && posts.length > 0) {
+      const { error: deletePostsError } = await supabase
+        .from('posts')
+        .delete()
+        .eq('submission_id', submissionId)
+
+      if (deletePostsError) {
+        console.error('Error deleting posts:', deletePostsError)
+        throw new Error('Failed to delete posts: ' + deletePostsError.message)
+      }
+      console.log('✓ Deleted', posts.length, 'posts from database')
+
+      // Delete images from Supabase storage
       const imagePaths = posts
         .map(p => {
-          const url = new URL(p.image_url)
-          return url.pathname.replace('/storage/v1/object/public/submissions/', '')
+          try {
+            const url = new URL(p.image_url)
+            return url.pathname.replace('/storage/v1/object/public/submissions/', '')
+          } catch {
+            return null
+          }
         })
         .filter(Boolean)
 
       if (imagePaths.length > 0) {
-        await supabase.storage
+        const { error: storageError } = await supabase.storage
           .from('submissions')
           .remove(imagePaths)
+        
+        if (storageError) {
+          console.error('Error deleting storage files:', storageError)
+          // Don't fail - storage delete is best effort
+        } else {
+          console.log('✓ Deleted', imagePaths.length, 'images from storage')
+        }
       }
-
-      // Delete posts from database
-      await supabase
-        .from('posts')
-        .delete()
-        .eq('submission_id', submissionId)
     }
 
     // Delete the submission itself
-    const { error } = await supabase
+    const { error: subError } = await supabase
       .from('submissions')
       .delete()
       .eq('id', submissionId)
 
-    if (error) {
-      console.error('Supabase delete error:', error)
-      throw new Error('Failed to delete submission')
+    if (subError) {
+      console.error('Error deleting submission:', subError)
+      throw new Error('Failed to delete submission: ' + subError.message)
     }
 
-    console.log('✓ Submission deleted:', submissionId, '- removed', posts?.length || 0, 'posts')
-
-    return NextResponse.json({ success: true })
+    console.log('✓ Submission deleted:', submissionId)
+    return NextResponse.json({ success: true, deleted_posts: posts?.length || 0 })
   } catch (error: any) {
     console.error('Delete submission failed:', error)
     return NextResponse.json(
