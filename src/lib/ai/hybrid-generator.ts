@@ -93,8 +93,9 @@ async function generateWithClaude(params: {
   brandContext: BrandContext
   model: string
   briefText?: string
+  retryCount?: number
 }): Promise<GeneratedPost> {
-  const { brandContext, briefText, model } = params
+  const { brandContext, briefText, model, retryCount = 0 } = params
   
   const anthropic = getAnthropicClient()
   console.log('Claude API: getAnthropicClient returned:', anthropic ? 'client initialized' : 'null')
@@ -105,7 +106,7 @@ async function generateWithClaude(params: {
     throw new Error('Claude API key not configured')
   }
   
-  console.log('Claude API: Starting generation with model:', model)
+  console.log('Claude API: Starting generation with model:', model, retryCount > 0 ? `(retry ${retryCount})` : '')
   
   // Fetch and convert image to base64, detect actual media type
   const imageResponse = await fetch(params.imageUrl)
@@ -116,8 +117,11 @@ async function generateWithClaude(params: {
   const contentType = imageResponse.headers.get('content-type') || 'image/jpeg'
   const mediaType = contentType.includes('png') ? 'image/png' : 'image/jpeg'
   
-  // Build the prompt
-  const prompt = buildClaudePrompt(brandContext, briefText)
+  // Build the prompt - add stricter instructions on retry
+  let prompt = buildClaudePrompt(brandContext, briefText)
+  if (retryCount > 0) {
+    prompt += '\n\n**CRITICAL RETRY NOTICE:** Your previous response was rejected. You MUST output ONLY the 2 lines below, nothing else. No reasoning, no explanations, no "The user wants..." text.'
+  }
   
   try {
     console.log('Claude API: Calling messages.create...')
@@ -152,6 +156,23 @@ async function generateWithClaude(params: {
     // Parse Claude's response
     const parsed = parseClaudeResponse(responseText, brandContext)
     
+    // Check if validation failed and we should retry
+    if (parsed.caption === 'INVALID_CAPTION_RETRY' && retryCount < 2) {
+      console.log('↻ Caption validation failed, retrying...')
+      return generateWithClaude({ ...params, retryCount: retryCount + 1 })
+    }
+    
+    if (parsed.caption === 'INVALID_CAPTION_RETRY') {
+      console.error('✗ Caption validation failed after 2 retries, using fallback')
+      // Return a safe fallback caption
+      return {
+        caption: `Check out our latest at ${brandContext.brand_name}!`,
+        hashtags: brandContext.hashtags ? (Array.isArray(brandContext.hashtags) ? brandContext.hashtags : brandContext.hashtags.split(' ')) : ['#Business'],
+        style: 'premium',
+        emojiCount: 0,
+      }
+    }
+    
     return {
       caption: parsed.caption,
       hashtags: parsed.hashtags,
@@ -173,15 +194,16 @@ async function generateWithLlamaVision(params: {
   brandContext: BrandContext
   model: string
   briefText?: string
+  retryCount?: number
 }): Promise<GeneratedPost> {
-  const { brandContext, briefText } = params
+  const { brandContext, briefText, retryCount = 0 } = params
   
   const apiKey = process.env.FIREWORKS_API_KEY
   if (!apiKey) {
     throw new Error('FIREWORKS_API_KEY not configured')
   }
   
-  console.log('Mistral API: Starting generation')
+  console.log('Mistral API: Starting generation', retryCount > 0 ? `(retry ${retryCount})` : '')
   
   // Fetch image
   const imageResponse = await fetch(params.imageUrl)
@@ -191,8 +213,11 @@ async function generateWithLlamaVision(params: {
   const base64Image = Buffer.from(imageBuffer).toString('base64')
   const contentType = imageResponse.headers.get('content-type') || 'image/jpeg'
   
-  // Build the prompt
-  const prompt = buildClaudePrompt(brandContext, briefText)
+  // Build the prompt - add stricter instructions on retry
+  let prompt = buildClaudePrompt(brandContext, briefText)
+  if (retryCount > 0) {
+    prompt += '\n\n**CRITICAL RETRY NOTICE:** Your previous response was rejected. You MUST output ONLY the 2 lines below, nothing else.'
+  }
   
   try {
     const response = await fetch('https://api.fireworks.ai/inference/v1/chat/completions', {
@@ -234,6 +259,22 @@ async function generateWithLlamaVision(params: {
     
     // Parse response (same format as Claude)
     const parsed = parseClaudeResponse(responseText, brandContext)
+    
+    // Check if validation failed and we should retry
+    if (parsed.caption === 'INVALID_CAPTION_RETRY' && retryCount < 2) {
+      console.log('↻ Caption validation failed, retrying...')
+      return generateWithLlamaVision({ ...params, retryCount: retryCount + 1 })
+    }
+    
+    if (parsed.caption === 'INVALID_CAPTION_RETRY') {
+      console.error('✗ Caption validation failed after 2 retries, using fallback')
+      return {
+        caption: `Check out our latest at ${brandContext.brand_name}!`,
+        hashtags: brandContext.hashtags ? (Array.isArray(brandContext.hashtags) ? brandContext.hashtags : brandContext.hashtags.split(' ')) : ['#Business'],
+        style: 'premium',
+        emojiCount: 0,
+      }
+    }
     
     return {
       caption: parsed.caption,
@@ -316,7 +357,58 @@ Nothing else. No explanations. No reasoning. Just the 2 lines. This is a BARBER 
 }
 
 /**
- * Parse Claude's response
+ * Validate caption quality - detect AI reasoning leaks and placeholders
+ */
+function isValidCaption(caption: string): boolean {
+  const badPatterns = [
+    /^the user wants/i,
+    /^let me /i,
+    /^i need to/i,
+    /^i should/i,
+    /^i can see/i,
+    /^the image (shows|appears|contains)/i,
+    /^based on the image/i,
+    /^\[text\]/i,
+    /^\[caption\]/i,
+    /^caption:/i,
+    /^hashtag:/i,
+    /^here is/i,
+    /^here's/i,
+    /^let me draft/i,
+    /^let me create/i,
+    /^i'll generate/i,
+    /^i will generate/i,
+  ]
+  
+  // Check for bad patterns
+  for (const pattern of badPatterns) {
+    if (pattern.test(caption)) {
+      console.log('✗ Caption failed validation:', pattern.source, '-', caption.slice(0, 50))
+      return false
+    }
+  }
+  
+  // Check for placeholder text
+  const placeholders = ['[text]', '[caption]', '[hashtags]', 'CAPTION:', 'HASHTAGS:']
+  for (const placeholder of placeholders) {
+    if (caption.toLowerCase().includes(placeholder.toLowerCase()) && !caption.startsWith('CAPTION:')) {
+      console.log('✗ Caption contains placeholder:', placeholder, '-', caption.slice(0, 50))
+      return false
+    }
+  }
+  
+  // Must have some actual content (at least 10 chars)
+  if (caption.length < 10) {
+    console.log('✗ Caption too short:', caption.length, 'chars')
+    return false
+  }
+  
+  console.log('✓ Caption passed validation')
+  return true
+}
+
+/**
+ * Parse Claude's response with validation
  */
 function parseClaudeResponse(response: string, brandContext: BrandContext): {
   caption: string
@@ -347,6 +439,13 @@ function parseClaudeResponse(response: string, brandContext: BrandContext): {
     } else if (typeof defaultTags === 'string') {
       hashtags = defaultTags.split(' ').filter(t => t.trim())
     }
+  }
+  
+  // Validate caption quality - reject AI reasoning leaks
+  if (!isValidCaption(caption)) {
+    console.warn('⚠ Caption validation failed, using fallback')
+    // Return empty caption to signal failure - caller should retry
+    caption = 'INVALID_CAPTION_RETRY'
   }
   
   // Count emojis
