@@ -268,11 +268,13 @@ async function generateWithLlamaVision(params: {
     
     if (parsed.caption === 'INVALID_CAPTION_RETRY') {
       console.error('✗ Caption validation failed after 2 retries, using fallback')
+      // Fallback with barber-specific hashtags (not generic ones)
+      const barberFallbackTags = ['#BarberAcademy', '#BarberTraining', '#BarberLife', '#FadeGame', '#BarberSchool']
       return {
-        caption: `Check out our latest at ${brandContext.brand_name}!`,
-        hashtags: brandContext.hashtags ? (Array.isArray(brandContext.hashtags) ? brandContext.hashtags : brandContext.hashtags.split(' ')) : ['#Business'],
+        caption: `New course at ${brandContext.brand_name}! ✂️ Book your spot today!`,
+        hashtags: barberFallbackTags,
         style: 'premium',
-        emojiCount: 0,
+        emojiCount: 1,
       }
     }
     
@@ -362,6 +364,8 @@ Nothing else. No explanations. No reasoning. Just the 2 lines. This is a BARBER 
 function isValidCaption(caption: string): boolean {
   const badPatterns = [
     /^the user wants/i,
+    /^the client wants/i,
+    /^the customer wants/i,
     /^let me /i,
     /^i need to/i,
     /^i should/i,
@@ -376,8 +380,12 @@ function isValidCaption(caption: string): boolean {
     /^here's/i,
     /^let me draft/i,
     /^let me create/i,
+    /^let me count/i,
+    /^let me analyze/i,
     /^i'll generate/i,
     /^i will generate/i,
+    /^i'll create/i,
+    /^i will create/i,
   ]
   
   // Check for bad patterns
@@ -505,7 +513,7 @@ export async function generatePostVariationsHybrid(params: {
       } else if (useFireworks) {
         const result = await generateWithLlamaVision({
           ...params,
-          model: 'accounts/fireworks/models/kimi-k2p6',
+          model: 'accounts/fireworks/models/kimi-k2-6',
         })
         variations.push(result)
         console.log('✓ Fireworks Kimi K2.6 variation', i + 1, 'generated')

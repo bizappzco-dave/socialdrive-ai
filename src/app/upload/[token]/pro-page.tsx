@@ -20,6 +20,11 @@ export default function UploadPage() {
   const [uploading, setUploading] = useState(false)
   const [uploaded, setUploaded] = useState(false)
   
+  // MCP Template matching state
+  const [templateMatch, setTemplateMatch] = useState<any>(null)
+  const [analyzing, setAnalyzing] = useState(false)
+  const [mcpError, setMcpError] = useState<string | null>(null)
+  
   // Form state
   const [uploadType, setUploadType] = useState<'images' | 'carousel' | 'video'>('images')
   const [platforms, setPlatforms] = useState<string[]>(['instagram']) // Default to Instagram
@@ -76,6 +81,64 @@ export default function UploadPage() {
       reader.readAsDataURL(file)
     })
   }
+
+  // Convert file to base64
+  function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = error => reject(error)
+    })
+  }
+
+  // Analyze images with MCP server
+  async function analyzeImagesWithMCP() {
+    if (images.length === 0) return
+    
+    setAnalyzing(true)
+    setMcpError(null)
+    
+    try {
+      // Convert first image to base64
+      const file = images[0]
+      const base64 = await fileToBase64(file)
+      
+      // Call MCP server
+      const response = await fetch('http://localhost:8765/template/match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image_base64: base64,
+          industry: 'barber'  // Or get from client profile
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error('MCP server unavailable')
+      }
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        setTemplateMatch(JSON.parse(result.response))
+      } else {
+        setMcpError(result.error || 'Analysis failed')
+      }
+    } catch (err: any) {
+      console.error('MCP analysis failed:', err)
+      setMcpError('Could not connect to MCP server. Continuing without template...')
+    } finally {
+      setAnalyzing(false)
+    }
+  }
+
+  // Trigger MCP analysis when images change
+  useEffect(() => {
+    if (images.length > 0) {
+      analyzeImagesWithMCP()
+    }
+  }, [images])
 
   // Handle drag & drop
   function handleDrop(e: React.DragEvent) {
@@ -185,6 +248,7 @@ export default function UploadPage() {
           briefText: brief,
           hasVoiceNote: !!voiceNote,
           images: uploadedImages,
+          templateMatch: templateMatch,  // Include template analysis
         }),
       })
       
@@ -533,12 +597,65 @@ export default function UploadPage() {
                       onClick={() => removeImage(index)}
                       className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                     >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* MCP Template Analysis Result */}
+            {analyzing && (
+              <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                  <p className="text-sm text-blue-800 font-medium">Analyzing images with AI...</p>
+                </div>
+                <p className="text-xs text-blue-600 mt-1">
+                  This usually takes 3-5 seconds
+                </p>
+              </div>
+            )}
+
+            {templateMatch && (
+              <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-start gap-2 mb-3">
+                  <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-green-900">Template Matched</h3>
+                    <p className="text-xs text-green-700 mt-1">
+                      Scene: <span className="font-medium">{templateMatch.scene_type}</span>
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <p className="text-xs text-green-800 font-medium">Key elements:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {templateMatch.key_elements.map((element: string, i: number) => (
+                      <span key={i} className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                        {element}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                
+                {templateMatch.suggested_templates && templateMatch.suggested_templates.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-green-200">
+                    <p className="text-xs text-green-800 font-medium mb-2">Suggested caption style:</p>
+                    <p className="text-xs text-green-900 italic">
+                      "{templateMatch.suggested_templates[0]}"
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {mcpError && (
+              <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <p className="text-xs text-yellow-800">{mcpError}</p>
               </div>
             )}
 
