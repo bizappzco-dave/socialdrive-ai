@@ -23,6 +23,8 @@ export default function UploadPage() {
   // MCP Template matching state
   const [templateMatch, setTemplateMatch] = useState<any>(null)
   const [analyzing, setAnalyzing] = useState(false)
+  const [generatingCaptions, setGeneratingCaptions] = useState(false)
+  const [generatedCaptions, setGeneratedCaptions] = useState<any[]>([])
   const [mcpError, setMcpError] = useState<string | null>(null)
   
   // Form state
@@ -104,8 +106,8 @@ export default function UploadPage() {
       const file = images[0]
       const base64 = await fileToBase64(file)
       
-      // Call MCP server
-      const response = await fetch('http://localhost:8765/template/match', {
+      // Step 1: Call MCP server for template match
+      const templateResponse = await fetch('http://localhost:8765/template/match', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -114,22 +116,47 @@ export default function UploadPage() {
         })
       })
       
-      if (!response.ok) {
+      if (!templateResponse.ok) {
         throw new Error('MCP server unavailable')
       }
       
-      const result = await response.json()
+      const templateResult = await templateResponse.json()
       
-      if (result.success) {
-        setTemplateMatch(JSON.parse(result.response))
+      if (templateResult.success) {
+        const template = JSON.parse(templateResult.response)
+        setTemplateMatch(template)
+        
+        // Step 2: Generate captions immediately after template match
+        setGeneratingCaptions(true)
+        const captionResponse = await fetch('http://localhost:8765/generate-captions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            image_base64: base64,
+            template_match: template,
+            industry: 'barber',
+            count: 15
+          })
+        })
+        
+        const captionResult = await captionResponse.json()
+        
+        if (captionResult.success) {
+          setGeneratedCaptions(captionResult.captions)
+          console.log(`✓ Generated ${captionResult.captions.length} captions`)
+        } else {
+          console.error('Caption generation failed:', captionResult.error)
+          setMcpError('Caption generation failed - will use server fallback')
+        }
       } else {
-        setMcpError(result.error || 'Analysis failed')
+        setMcpError(templateResult.error || 'Analysis failed')
       }
     } catch (err: any) {
       console.error('MCP analysis failed:', err)
       setMcpError('Could not connect to MCP server. Continuing without template...')
     } finally {
       setAnalyzing(false)
+      setGeneratingCaptions(false)
     }
   }
 
@@ -249,6 +276,7 @@ export default function UploadPage() {
           hasVoiceNote: !!voiceNote,
           images: uploadedImages,
           templateMatch: templateMatch,  // Include template analysis
+          generatedCaptions: generatedCaptions.length > 0 ? generatedCaptions : null,  // Include client-generated captions
         }),
       })
       
@@ -615,6 +643,18 @@ export default function UploadPage() {
                 </div>
                 <p className="text-xs text-blue-600 mt-1">
                   This usually takes 3-5 seconds
+                </p>
+              </div>
+            )}
+
+            {generatingCaptions && (
+              <div className="mt-4 bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
+                  <p className="text-sm text-purple-800 font-medium">Generating 15 captions...</p>
+                </div>
+                <p className="text-xs text-purple-600 mt-1">
+                  This takes about 30 seconds
                 </p>
               </div>
             )}
