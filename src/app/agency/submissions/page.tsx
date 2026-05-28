@@ -169,7 +169,7 @@ export default function SubmissionsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {sub.submitted_at ? (
                         <div className="text-sm text-gray-900">
-                          {new Date(sub.submitted_at).toLocaleDateString()}
+                          {new Date(sub.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </div>
                       ) : (
                         <span className="text-sm text-gray-400">Not uploaded</span>
