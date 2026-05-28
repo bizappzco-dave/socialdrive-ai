@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Clock, CheckCircle, Loader2, AlertCircle, ExternalLink } from 'lucide-react'
+import { Clock, CheckCircle, Loader2, AlertCircle, ExternalLink, Trash2 } from 'lucide-react'
 
 interface Submission {
   id: string
@@ -22,6 +22,7 @@ export default function SubmissionsPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
 
   useEffect(() => {
     loadSubmissions()
@@ -42,6 +43,33 @@ export default function SubmissionsPage() {
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function deleteSubmission(id: string) {
+    if (!confirm('Delete this submission? This will remove all generated posts and images. This cannot be undone.')) {
+      return
+    }
+    
+    setDeleting(id)
+    try {
+      const response = await fetch(`/api/agency/submissions/${id}`, {
+        method: 'DELETE',
+      })
+      
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to delete submission')
+      }
+      
+      // Remove from list
+      setSubmissions(prev => prev.filter(sub => sub.id !== id))
+      console.log('✓ Submission deleted:', id)
+    } catch (err: any) {
+      console.error('Delete failed:', err)
+      alert('Failed to delete: ' + err.message)
+    } finally {
+      setDeleting(null)
     }
   }
 
@@ -151,7 +179,7 @@ export default function SubmissionsPage() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {submissions.map((sub) => (
-                  <tr key={sub.id} className="hover:bg-gray-50">
+                  <tr key={sub.id} className="hover:bg-gray-50 group">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{sub.client_name}</div>
                       <div className="text-xs text-gray-500">
@@ -176,21 +204,43 @@ export default function SubmissionsPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {sub.status === 'ready' && (
-                        <Link
-                          href={`/review/${sub.review_token}`}
-                          className="text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1"
-                        >
-                          Review
-                          <ExternalLink className="h-3 w-3" />
-                        </Link>
-                      )}
-                      {sub.status === 'approved' && (
-                        <span className="text-gray-500">Completed</span>
-                      )}
-                      {(sub.status === 'pending' || sub.status === 'uploaded' || sub.status === 'generating') && (
-                        <span className="text-gray-400">Waiting...</span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {sub.status === 'ready' && (
+                          <Link
+                            href={`/review/${sub.review_token}`}
+                            className="text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1"
+                          >
+                            Review
+                            <ExternalLink className="h-3 w-3" />
+                          </Link>
+                        )}
+                        {sub.status === 'approved' && (
+                          <span className="text-gray-500">Completed</span>
+                        )}
+                        {(sub.status === 'pending' || sub.status === 'uploaded' || sub.status === 'generating') && (
+                          <span className="text-gray-400">Waiting...</span>
+                        )}
+                        {sub.status === 'error' && (
+                          <button
+                            onClick={() => deleteSubmission(sub.id)}
+                            className="text-red-600 hover:text-red-800 font-medium inline-flex items-center gap-1"
+                            disabled={deleting === sub.id}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            Delete
+                          </button>
+                        )}
+                        {sub.status !== 'error' && (
+                          <button
+                            onClick={() => deleteSubmission(sub.id)}
+                            className="text-gray-400 hover:text-red-600 font-medium inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            disabled={deleting === sub.id}
+                            title="Delete submission"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
