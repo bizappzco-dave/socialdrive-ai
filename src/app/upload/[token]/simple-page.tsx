@@ -20,6 +20,13 @@ export default function SimpleUploadPage() {
   const [uploading, setUploading] = useState(false)
   const [uploaded, setUploaded] = useState(false)
   
+  // MCP state
+  const [analyzing, setAnalyzing] = useState(false)
+  const [generatingCaptions, setGeneratingCaptions] = useState(false)
+  const [templateMatch, setTemplateMatch] = useState<any>(null)
+  const [generatedCaptions, setGeneratedCaptions] = useState<any[]>([])
+  const [mcpError, setMcPError] = useState<string | null>(null)
+  
   // Form state
   const [images, setImages] = useState<File[]>([])
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
@@ -77,6 +84,77 @@ export default function SimpleUploadPage() {
     handleFileSelect(e.dataTransfer.files)
   }
 
+  // MCP Analysis: Analyze images and generate captions
+  async function analyzeImagesWithMCP() {
+    if (images.length === 0) return
+    
+    setAnalyzing(true)
+    setMcPError(null)
+    
+    try {
+      // Convert first image to base64
+      const file = images[0]
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+      
+      // Call MCP template match
+      const templateResponse = await fetch('http://localhost:8765/template/match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_base64: base64, industry: 'barber' })
+      })
+      
+      if (!templateResponse.ok) throw new Error('MCP server unavailable')
+      
+      const templateData = await templateResponse.json()
+      if (templateData.success) {
+        const templateMatch = JSON.parse(templateData.response)
+        setTemplateMatch(templateMatch)
+        
+        // Call MCP caption generation
+        setGeneratingCaptions(true)
+        const captionResponse = await fetch('http://localhost:8765/generate-captions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            image_base64: base64,
+            template_match: templateMatch,
+            industry: 'barber',
+            count: 15
+          })
+        })
+        
+        const captionData = await captionResponse.json()
+        if (captionData.success) {
+          setGeneratedCaptions(captionData.captions)
+          console.log(`Generated ${captionData.captions.length} captions`)
+        } else {
+          console.error('Caption generation failed:', captionData.error)
+          setMcPError('Caption generation failed - will use server fallback')
+        }
+      } else {
+        setMcPError(templateData.error || 'Analysis failed')
+      }
+    } catch (err: any) {
+      console.error('MCP analysis failed:', err)
+      setMcPError('Could not connect to MCP server. Continuing without template...')
+    } finally {
+      setAnalyzing(false)
+      setGeneratingCaptions(false)
+    }
+  }
+
+  // Trigger MCP analysis when images are selected
+  useEffect(() => {
+    if (images.length > 0 && !templateMatch) {
+      analyzeImagesWithMCP()
+    }
+  }, [images])
+
   // Handle form submission
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -127,6 +205,8 @@ export default function SimpleUploadPage() {
           briefText: brief,
           hasVoiceNote: false,
           images: uploadedImages,
+          templateMatch: templateMatch,
+          generatedCaptions: generatedCaptions.length > 0 ? generatedCaptions : null,
         }),
       })
       
@@ -293,6 +373,55 @@ export default function SimpleUploadPage() {
                     Max 5 photos please
                   </p>
                 )}
+              </div>
+            )}
+
+            {/* MCP Analysis Status */}
+            {analyzing && (
+              <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                  <p className="text-sm text-blue-800 font-medium">Analyzing images with AI...</p>
+                </div>
+                <p className="text-xs text-blue-600 mt-1">This usually takes 3-5 seconds</p>
+              </div>
+            )}
+
+            {generatingCaptions && (
+              <div className="mt-4 bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
+                  <p className="text-sm text-purple-800 font-medium">Generating 15 captions...</p>
+                </div>
+                <p className="text-xs text-purple-600 mt-1">This takes about 30 seconds</p>
+              </div>
+            )}
+
+            {templateMatch && (
+              <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-start gap-2 mb-3">
+                  <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-green-900">Template Matched</h3>
+                    <p className="text-xs text-green-700 mt-1">Scene: <span className="font-medium">{templateMatch.scene_type}</span></p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs text-green-800 font-medium">Key elements:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {templateMatch.key_elements.map((element: string, i: number) => (
+                      <span key={i} className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                        {element}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {mcpError && (
+              <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <p className="text-xs text-yellow-800">{mcpError}</p>
               </div>
             )}
           </div>
