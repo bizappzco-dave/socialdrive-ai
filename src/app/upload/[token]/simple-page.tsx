@@ -109,7 +109,8 @@ export default function SimpleUploadPage() {
       
       const templateData = await templateResponse.json()
       if (templateData.success) {
-        const templateMatch = JSON.parse(templateData.response)
+        // templateData is already the template match object (no need to parse again)
+        const templateMatch = templateData.template_match || templateData
         setTemplateMatch(templateMatch)
         
         // Call MCP caption generation
