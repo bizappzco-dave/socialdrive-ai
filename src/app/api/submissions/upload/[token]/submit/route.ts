@@ -260,7 +260,7 @@ export async function POST(
             caption_length: caption.split(' ').length,
             hashtag_count: hashtags.length,
             hashtags: hashtags,
-            emoji_count: (caption.match(/[🐦🦆🦚🐧🐣🐤🐥🦃🐔🐓🐣🐤🐥🦃🐔🐓/g) || []).length,
+            emoji_count: 0,
             emojis_used: caption.match(/[\p{Emoji}]/gu) || [],
             submission_id: submission.id,
             post_type: type === 'carousel' || type === 'video' ? type : 'image',
