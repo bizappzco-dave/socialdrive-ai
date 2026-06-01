@@ -13,6 +13,18 @@ export async function GET(
   try {
     const supabase = createAdminClient()
     
+    // Test service role key first
+    const { data: testData, error: testError } = await supabase
+      .from('submissions')
+      .select('count')
+      .limit(1)
+    
+    console.log('Service role test:', {
+      hasError: !!testError,
+      errorMessage: testError?.message,
+      canQuerySubmissions: !!testData
+    })
+    
     const { data: submission, error } = await supabase
       .from('submissions')
       .select('id, client_id, client_name, client_email, client_phone, status')
