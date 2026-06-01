@@ -79,6 +79,7 @@ export default function SubmissionsPage() {
       uploaded: { color: 'bg-blue-100 text-blue-700', icon: Loader2, label: 'Generating' },
       generating: { color: 'bg-blue-100 text-blue-700', icon: Loader2, label: 'Generating' },
       ready: { color: 'bg-green-100 text-green-700', icon: CheckCircle, label: 'Ready for Review' },
+      completed: { color: 'bg-green-100 text-green-700', icon: CheckCircle, label: 'Completed' },
       approved: { color: 'bg-purple-100 text-purple-700', icon: CheckCircle, label: 'Approved' },
       error: { color: 'bg-red-100 text-red-700', icon: AlertCircle, label: 'Error' },
     }
@@ -205,12 +206,12 @@ export default function SubmissionsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex items-center gap-2">
-                        {sub.status === 'ready' && (
+                        {(sub.status === 'ready' || sub.status === 'completed') && sub.post_count > 0 && (
                           <Link
                             href={`/review/${sub.review_token}`}
                             className="text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1"
                           >
-                            Review
+                            View
                             <ExternalLink className="h-3 w-3" />
                           </Link>
                         )}
