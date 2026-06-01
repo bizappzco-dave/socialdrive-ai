@@ -1,22 +1,19 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { getCurrentUserClientAccess } from '@/lib/client-access'
 
 export default async function ClientDashboard() {
   const supabase = await createClient()
   
-  // Get current user
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/signin')
-  
-  // Get client profile
-  const { data: client } = await supabase
-    .from('clients')
-    .select('id, name, metadata')
-    .eq('user_id', user.id)
-    .single()
-  
-  if (!client) redirect('/client/onboarding')
+  // Resolve current user's client access (supports users-per-account)
+  const accessResult = await getCurrentUserClientAccess()
+  if (!accessResult) redirect('/auth/signin')
+
+  const client = {
+    id: accessResult.access.clientId,
+    name: accessResult.access.clientName || 'Client',
+  }
   
   // Get recent posts
   const { data: recentPosts } = await supabase
@@ -120,13 +117,13 @@ export default async function ClientDashboard() {
           </Link>
           
           <Link
-            href="/client/preferences"
+            href="/client/posting"
             className="flex items-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all"
           >
-            <span className="text-3xl mr-3">⚙️</span>
+            <span className="text-3xl mr-3">🚀</span>
             <div>
-              <p className="font-semibold text-gray-900">Preferences</p>
-              <p className="text-sm text-gray-500">Content style & timing</p>
+              <p className="font-semibold text-gray-900">Manual Posting</p>
+              <p className="text-sm text-gray-500">Post now or schedule approved content</p>
             </div>
           </Link>
         </div>
