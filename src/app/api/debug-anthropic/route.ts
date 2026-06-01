@@ -4,7 +4,16 @@ import Anthropic from '@anthropic-ai/sdk'
 export async function GET() {
   const apiKey = process.env.ANTHROPIC_API_KEY
   
-  const debug = {
+  const debug: {
+    keyConfigured: boolean
+    keyLength: number
+    keyStarts: string
+    keyEnds: string | undefined
+    testCall?: string
+    testResponse?: string
+    error?: string
+    errorType?: string
+  } = {
     keyConfigured: !!apiKey,
     keyLength: apiKey?.length || 0,
     keyStarts: apiKey?.substring(0, 15) + '...',
