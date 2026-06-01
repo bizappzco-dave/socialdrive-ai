@@ -66,16 +66,9 @@ export default function SimpleUploadPage() {
     
     setImages(prev => [...prev, ...newFiles])
     
-    // Create previews
-    newFiles.forEach(file => {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        if (e.target?.result) {
-          setImagePreviews(prev => [...prev, e.target!.result as string])
-        }
-      }
-      reader.readAsDataURL(file)
-    })
+    // Create previews using blob URLs (much faster than base64 for large files)
+    const newPreviews = newFiles.map(file => URL.createObjectURL(file))
+    setImagePreviews(prev => [...prev, ...newPreviews])
   }
 
   // Handle drag & drop
@@ -86,7 +79,7 @@ export default function SimpleUploadPage() {
 
   // MCP Analysis: Analyze images and generate captions (silent, no UI)
   async function analyzeImagesWithMCP() {
-    if (images.length === 0) return
+    if (images.length === 0) return null
     
     try {
       // Convert first image to base64
@@ -98,8 +91,9 @@ export default function SimpleUploadPage() {
         reader.readAsDataURL(file)
       })
       
-      // Call MCP template match
-      const templateResponse = await fetch('http://localhost:8765/template/match', {
+      // Call MCP template match (production URL)
+      const MCP_BASE_URL = process.env.NEXT_PUBLIC_MCP_URL || 'https://social-drive-mcp-railway-production-cb81.up.railway.app'
+      const templateResponse = await fetch(`${MCP_BASE_URL}/template/match`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image_base64: base64, industry: 'barber' })
@@ -108,31 +102,39 @@ export default function SimpleUploadPage() {
       if (!templateResponse.ok) throw new Error('MCP server unavailable')
       
       const templateData = await templateResponse.json()
+      let templateMatch = null
+      let captions = []
+      
       if (templateData.success) {
         // templateData is already the template match object (no need to parse again)
-        const templateMatch = templateData.template_match || templateData
+        templateMatch = templateData.template_match || templateData
         setTemplateMatch(templateMatch)
         
-        // Call MCP caption generation
-        const captionResponse = await fetch('http://localhost:8765/generate-captions', {
+        // Call MCP caption generation (production URL)
+        const captionResponse = await fetch(`${MCP_BASE_URL}/generate-captions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             image_base64: base64,
             template_match: templateMatch,
             industry: 'barber',
-            count: 15
+            count: 3  // 3 captions per image for client to choose from
           })
         })
         
         const captionData = await captionResponse.json()
         if (captionData.success) {
+          captions = captionData.captions
           setGeneratedCaptions(captionData.captions)
         }
       }
+      
+      // Return the results so caller can use them immediately (not from async state)
+      return { templateMatch, captions }
     } catch (err: any) {
       console.error('MCP analysis failed:', err)
       // Silently continue - server will handle fallback
+      return null
     }
   }
 
@@ -154,14 +156,29 @@ export default function SimpleUploadPage() {
     setError(null)
     
     // MCP Analysis: Silent processing (no UI feedback)
+    // IMPORTANT: We need to capture the captions directly, not from state
+    // because React state updates are async and won't be ready by the time we submit
+    let localCaptions = generatedCaptions
+    let localTemplateMatch = templateMatch
+    
     if (images.length > 0 && !templateMatch) {
-      await analyzeImagesWithMCP()
+      const mcpResult = await analyzeImagesWithMCP()
+      if (mcpResult) {
+        localCaptions = mcpResult.captions
+        localTemplateMatch = mcpResult.templateMatch
+      }
     }
     
     try {
+      console.log('🚀 FRONTEND: Starting image upload...')
+      console.log('🚀 FRONTEND: Images count:', images.length)
+      console.log('🚀 FRONTEND: Brief text:', brief)
+      console.log('🚀 FRONTEND: Token:', token)
+      
       // Upload images to storage
       const uploadedImages = await Promise.all(
         images.map(async (file) => {
+          console.log('🚀 FRONTEND: Uploading file:', file.name)
           const formData = new FormData()
           formData.append('file', file)
           formData.append('submissionToken', token)
@@ -171,13 +188,29 @@ export default function SimpleUploadPage() {
             body: formData,
           })
           
+          console.log('🚀 FRONTEND: Upload response:', response.status)
+          
           if (!response.ok) {
             throw new Error(`Failed to upload ${file.name}`)
           }
           
-          return await response.json()
+          const imageData = await response.json()
+          console.log('🚀 FRONTEND: Uploaded image data:', imageData)
+          return imageData
         })
       )
+      
+      console.log('🚀 FRONTEND: All images uploaded:', uploadedImages.length)
+      console.log('🚀 FRONTEND: Uploaded images:', JSON.stringify(uploadedImages, null, 2))
+      console.log('🚀 FRONTEND: Calling submit API...')
+      console.log('🚀 FRONTEND: Request payload:', JSON.stringify({
+        uploadType: 'images',
+        platforms: ['instagram'],
+        briefText: brief?.substring(0, 50),
+        imagesCount: uploadedImages.length,
+        imageUrls: uploadedImages.map((img: any) => img.url?.substring(0, 80)),
+        hasCaptions: !!localCaptions?.length,
+      }, null, 2))
       
       // Create/update submission with pre-generated captions
       const submitResponse = await fetch(`/api/submissions/upload/${token}/submit`, {
@@ -186,22 +219,28 @@ export default function SimpleUploadPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          uploadType: 'images',  // Simple tier: always images
-          platforms: ['instagram'],  // Simple tier: Instagram only
+          uploadType: 'images',
+          platforms: ['instagram'],
           briefText: brief,
           hasVoiceNote: false,
           images: uploadedImages,
-          templateMatch: templateMatch,
-          generatedCaptions: generatedCaptions.length > 0 ? generatedCaptions : null,
+          templateMatch: localTemplateMatch,
+          generatedCaptions: localCaptions.length > 0 ? localCaptions : null,
         }),
       })
       
+      console.log('🚀 FRONTEND: Submit response status:', submitResponse.status)
+      console.log('🚀 FRONTEND: Submit response headers:', Object.fromEntries(submitResponse.headers.entries()))
+      
       if (!submitResponse.ok) {
         const errorData = await submitResponse.json()
-        console.error('Submit error:', errorData)
+        console.error('🚀 FRONTEND: Submit error:', errorData)
         throw new Error(errorData.error || 'Submission failed')
       }
       
+      const submitData = await submitResponse.json()
+      console.log('🚀 FRONTEND: Submit success:', submitData)
+      console.log('🚀 FRONTEND: Setting uploaded=true')
       setUploaded(true)
       
     } catch (err: any) {

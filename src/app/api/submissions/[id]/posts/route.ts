@@ -15,9 +15,8 @@ export async function GET(
     
     const { data: posts, error } = await supabase
       .from('posts')
-      .select('id, caption_text, image_url, caption_style, selected, hashtags, emoji_count, emojis_used')
+      .select('id, caption, image_urls, hashtags')
       .eq('submission_id', params.id)
-      .eq('deleted', false)  // Only show non-deleted posts
       .order('created_at', { ascending: true })
     
     if (error) {

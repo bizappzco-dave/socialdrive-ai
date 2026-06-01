@@ -41,7 +41,7 @@ export async function DELETE(
       console.log('✓ Deleted', posts.length, 'posts from database')
 
       // Delete images from Supabase storage
-      const imagePaths = posts
+      const imagePaths: string[] = posts
         .map(p => {
           try {
             const url = new URL(p.image_url)
@@ -50,7 +50,7 @@ export async function DELETE(
             return null
           }
         })
-        .filter(Boolean)
+        .filter((path): path is string => path !== null)
 
       if (imagePaths.length > 0) {
         const { error: storageError } = await supabase.storage

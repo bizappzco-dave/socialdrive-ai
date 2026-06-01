@@ -2,10 +2,10 @@
  * Ollama Pro Integration
  * 
  * Local LLM for content generation (cheap, fast, private)
- * Default model: qwen3.5:cloud (or qwen2.5:7b for smaller footprint)
+ * Default model: llama3.2 (Railway deployment)
  */
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434'
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen3.5:cloud'
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'https://ollama-production-6ab6.up.railway.app'
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.2:latest'
 
 interface OllamaRequest {
   model: string

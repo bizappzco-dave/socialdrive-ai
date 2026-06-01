@@ -126,16 +126,17 @@ export default function UploadPage() {
         const template = JSON.parse(templateResult.response)
         setTemplateMatch(template)
         
-        // Step 2: Generate captions immediately after template match
+        // Step 2: Generate captions immediately after template match (production URL)
         setGeneratingCaptions(true)
-        const captionResponse = await fetch('http://localhost:8765/generate-captions', {
+        const MCP_BASE_URL = process.env.NEXT_PUBLIC_MCP_URL || 'https://social-drive-mcp-railway-production.up.railway.app'
+        const captionResponse = await fetch(`${MCP_BASE_URL}/generate-captions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             image_base64: base64,
             template_match: template,
             industry: 'barber',
-            count: 15
+            count: 3  // 3 captions per image for client to choose from
           })
         })
         

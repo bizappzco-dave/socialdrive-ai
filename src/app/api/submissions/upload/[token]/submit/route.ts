@@ -13,7 +13,17 @@ export async function POST(
   { params }: { params: { token: string } }
 ) {
   try {
-    console.log('Submit route called for token:', params.token)
+    console.log('🔥🔥🔥 SUBMIT API CALLED 🔥🔥🔥')
+    console.log('Token:', params.token)
+    console.log('Timestamp:', new Date().toISOString())
+    const body = await request.json()
+    console.log('Request body:', JSON.stringify({
+      uploadType: body.uploadType,
+      platforms: body.platforms,
+      briefText: body.briefText?.substring(0, 30),
+      images: body.images?.length,
+      hasCaptions: !!body.generatedCaptions,
+    }, null, 2))
     console.log('Supabase URL configured:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)
     console.log('Service Role Key configured:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
     console.log('Anthropic Key configured:', !!process.env.ANTHROPIC_API_KEY)
@@ -36,7 +46,6 @@ export async function POST(
     }
     console.log('✅ Supabase test query SUCCESS, found', testQuery?.length, 'clients')
     
-    const body = await request.json()
     const { uploadType, platforms, briefText, hasVoiceNote, images, templateMatch, generatedCaptions } = body
     
     // Validate platforms
@@ -107,10 +116,8 @@ export async function POST(
     // Update submission status
     console.log('Updating submission status...')
     const updateData: any = {
-      status: 'generating',
+      status: 'pending',
       brief_text: briefText,
-      submission_type: type,
-      post_count: type === 'images' ? images.length * 3 : images.length,
       updated_at: new Date().toISOString(),
     }
     
@@ -147,10 +154,9 @@ export async function POST(
         .insert(
           images.map((img: any, index: number) => ({
             submission_id: submission.id,
-            image_url: img.url,
-            image_filename: img.filename,
-            image_size: img.size,
-            image_context: img.context || '',
+            client_id: submission.client_id,
+            file_name: img.filename || `image_${index}.jpg`,
+            public_url: img.url,
             sort_order: index,
           }))
         )
@@ -222,58 +228,61 @@ export async function POST(
     if (hasPreGeneratedCaptions) {
       console.log('✅ Using', generatedCaptions.length, 'pre-generated captions from MCP (no AI generation needed)')
       
-      // Use pre-generated captions directly
+      // IMPORTANT: MCP generates 3 captions for the FIRST image only
+      // We create 3 posts for EACH image using those same 3 captions
+      // This gives us: 3 images × 3 captions = 9 posts total
+      // (or 5 images × 3 captions = 15 posts)
+      
       for (let i = 0; i < images.length; i++) {
         const image = images[i]
-        console.log('Creating posts for image', i + 1, 'with pre-generated captions')
+        console.log('Creating 3 posts for image', i + 1, 'of', images.length, 'with pre-generated captions')
         
-        // Get captions for this image (or cycle through if fewer captions than images)
-        const captionIndex = i % generatedCaptions.length
-        const captionData = generatedCaptions[captionIndex]
+        // Use ALL captions for this image (3 captions = 3 posts per image)
+        for (let j = 0; j < generatedCaptions.length; j++) {
+          const captionData = generatedCaptions[j]
         
-        // Parse caption and hashtags
-        let caption = captionData.caption || captionData.text || ''
-        let hashtags = captionData.hashtags || []
-        
-        // If hashtags is a string, split it
-        if (typeof hashtags === 'string') {
-          hashtags = hashtags.split(' ').filter(h => h.trim())
-        }
-        
-        // Validate caption length (Sociamonials limit: 280 chars)
-        const fullCaption = caption + ' ' + hashtags.join(' ')
-        if (fullCaption.length > 280) {
-          console.warn(`Caption too long (${fullCaption.length} chars), truncating...`)
-          const hashtagLength = hashtags.join(' ').length + 1
-          const maxCaptionLength = 275 - hashtagLength
-          caption = caption.substring(0, maxCaptionLength).trim() + '...'
-        }
-        
-        const { data: post, error: postError } = await supabase
-          .from('posts')
-          .insert({
-            client_id: submission.client_id,
-            image_url: image.url,
-            image_filename: image.filename,
-            caption_text: caption,
-            caption_style: 'mcp-generated',
-            caption_length: caption.split(' ').length,
-            hashtag_count: hashtags.length,
-            hashtags: hashtags,
-            emoji_count: 0,
-            emojis_used: caption.match(/[\p{Emoji}]/gu) || [],
-            submission_id: submission.id,
-            post_type: type === 'carousel' || type === 'video' ? type : 'image',
-          })
-          .select()
-          .single()
-        
-        if (postError) {
-          console.error('Failed to create post:', postError)
-        } else {
-          allPosts.push(post)
-        }
-      }
+          // Parse caption and hashtags
+          let caption = captionData.caption || captionData.text || ''
+          let hashtags = captionData.hashtags || []
+          
+          // If hashtags is a string, split it
+          if (typeof hashtags === 'string') {
+            hashtags = hashtags.split(' ').filter(h => h.trim())
+          }
+          
+          // Validate caption length (Sociamonials limit: 280 chars)
+          const fullCaption = caption + ' ' + hashtags.join(' ')
+          if (fullCaption.length > 280) {
+            console.warn(`Caption too long (${fullCaption.length} chars), truncating...`)
+            const hashtagLength = hashtags.join(' ').length + 1
+            const maxCaptionLength = 275 - hashtagLength
+            caption = caption.substring(0, maxCaptionLength).trim() + '...'
+          }
+          
+          const { data: post, error: postError } = await supabase
+            .from('posts')
+            .insert({
+              client_id: submission.client_id,
+              submission_id: submission.id,
+              platform: 'instagram',
+              caption: caption,
+              hashtags: hashtags,
+              image_urls: [image.url],
+              status: 'draft',
+            })
+            .select()
+            .single()
+          
+          if (postError) {
+            console.error('❌ Failed to create post:', postError)
+            console.error('❌ Post error details:', JSON.stringify(postError, null, 2))
+            throw new Error('Failed to create post: ' + postError.message)
+          } else {
+            console.log('✅ Post created successfully:', post.id)
+            allPosts.push(post)
+          }
+        } // Close inner loop (j) - 3 captions per image
+      } // Close outer loop (i) - all images
       
       console.log('✅ Created', allPosts.length, 'posts with pre-generated captions')
     } else {
@@ -334,17 +343,12 @@ export async function POST(
             .from('posts')
             .insert({
               client_id: submission.client_id,
-              image_url: image.url,
-              image_filename: image.filename,
-              caption_text: variation.caption,
-              caption_style: variation.style,
-              caption_length: variation.caption.split(' ').length,
-              hashtag_count: variation.hashtags.length,
-              hashtags: variation.hashtags,
-              emoji_count: variation.emojiCount,
-              emojis_used: variation.caption.match(/[\p{Emoji}]/gu) || [],
               submission_id: submission.id,
-              post_type: type === 'carousel' || type === 'video' ? type : 'image',
+              platform: 'instagram',
+              caption: variation.caption,
+              hashtags: variation.hashtags,
+              image_urls: [image.url],
+              status: 'draft',
             })
             .select()
             .single()
@@ -501,20 +505,18 @@ export async function POST(
       }
     }
     
-    // Update submission status to ready
+    // Update submission status to completed
     await supabase
       .from('submissions')
       .update({
-        status: 'ready',
-        post_count: allPosts.length,
-        generated_at: new Date().toISOString(),
+        status: 'completed',
         updated_at: new Date().toISOString(),
       })
       .eq('id', submission.id)
     
     // Auto-delete any posts with non-English text (CJK characters)
     const cjkRegex = /[\u4e00-\u9fff\u3400-\u4dbf\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]/u
-    const badPosts = allPosts.filter(post => cjkRegex.test(post.caption_text))
+    const badPosts = allPosts.filter(post => cjkRegex.test(post.caption))
     
     if (badPosts.length > 0) {
       console.log(`Auto-deleting ${badPosts.length} posts with non-English text`)
@@ -524,11 +526,8 @@ export async function POST(
         .update({ deleted: true, deleted_at: new Date().toISOString() })
         .in('id', badPosts.map(p => p.id))
       
-      // Update final count
-      await supabase
-        .from('submissions')
-        .update({ post_count: allPosts.length - badPosts.length })
-        .eq('id', submission.id)
+      // Update final count (removed post_count - column doesn't exist in TaskifiAI schema)
+      console.log(`Deleted ${badPosts.length} posts with non-English text`)
     }
     
     console.log('WhatsApp notification would be sent to:', submission.client_phone)

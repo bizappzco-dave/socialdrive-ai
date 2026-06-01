@@ -15,7 +15,7 @@ export async function GET(
     
     const { data: submission, error } = await supabase
       .from('submissions')
-      .select('id, client_id, client_name, client_email, client_phone, status, post_count')
+      .select('id, client_id, client_name, client_email, client_phone, status')
       .eq('review_token', params.token)
       .single()
     
