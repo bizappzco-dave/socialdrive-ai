@@ -19,14 +19,26 @@ export async function GET(
       .eq('review_token', params.token)
       .single()
     
-    if (error) {
-      console.error('Supabase error fetching submission:', error)
-      console.error('Review token:', params.token)
-    }
+    console.log('Review token lookup:', {
+      token: params.token,
+      hasError: !!error,
+      errorCode: error?.code,
+      errorMessage: error?.message,
+      errorDetails: error?.details,
+      hasSubmission: !!submission,
+      submissionId: submission?.id
+    })
     
     if (error || !submission) {
       return NextResponse.json(
-        { error: 'Invalid or expired review link' },
+        { 
+          error: 'Invalid or expired review link',
+          debug: {
+            hasError: !!error,
+            errorCode: error?.code,
+            token: params.token
+          }
+        },
         { status: 404 }
       )
     }
