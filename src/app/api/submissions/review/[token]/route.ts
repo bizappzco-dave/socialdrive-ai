@@ -19,6 +19,11 @@ export async function GET(
       .eq('review_token', params.token)
       .single()
     
+    if (error) {
+      console.error('Supabase error fetching submission:', error)
+      console.error('Review token:', params.token)
+    }
+    
     if (error || !submission) {
       return NextResponse.json(
         { error: 'Invalid or expired review link' },
