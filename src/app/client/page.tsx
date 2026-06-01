@@ -93,7 +93,7 @@ export default async function ClientDashboard() {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Quick Actions
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Link
             href="/client/upload"
             className="flex items-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all"
@@ -124,6 +124,17 @@ export default async function ClientDashboard() {
             <div>
               <p className="font-semibold text-gray-900">Manual Posting</p>
               <p className="text-sm text-gray-500">Post now or schedule approved content</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/client/team"
+            className="flex items-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-all"
+          >
+            <span className="text-3xl mr-3">👥</span>
+            <div>
+              <p className="font-semibold text-gray-900">Team Access</p>
+              <p className="text-sm text-gray-500">Manage staff roles and permissions</p>
             </div>
           </Link>
         </div>
