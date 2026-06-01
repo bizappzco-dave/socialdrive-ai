@@ -3,6 +3,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getClientPreferences } from '@/lib/supabase/queries'
 import { generateSociamonialsCSV, generateCSVFilename } from '@/lib/csv-export'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * GET /api/export/sociamonials
  * 
