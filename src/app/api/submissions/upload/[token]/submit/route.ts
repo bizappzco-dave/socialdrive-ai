@@ -261,6 +261,7 @@ export async function POST(
             .from('posts')
             .insert({
               client_id: submission.client_id,
+              submission_id: submission.id,
               caption_text: caption,
               hashtags: hashtags,
               image_url: image.url,
@@ -347,6 +348,7 @@ export async function POST(
             .from('posts')
             .insert({
               client_id: submission.client_id,
+              submission_id: submission.id,
               caption_text: variation.caption,
               hashtags: variation.hashtags,
               image_url: image.url,
