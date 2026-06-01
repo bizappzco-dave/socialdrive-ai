@@ -257,18 +257,24 @@ export async function POST(
             const hashtagLength = hashtags.join(' ').length + 1
             const maxCaptionLength = 275 - hashtagLength
             caption = caption.substring(0, maxCaptionLength).trim() + '...'
-          }
-          
-          const { data: post, error: postError } = await supabase
+          }          const { data: post, error: postError } = await supabase
             .from('posts')
             .insert({
               client_id: submission.client_id,
-              submission_id: submission.id,
-              platform: 'instagram',
               caption_text: caption,
               hashtags: hashtags,
               image_url: image.url,
-              status: 'draft',
+              caption_style: 'short_statement',
+              caption_length: caption.length,
+              hashtag_count: hashtags.length,
+              emoji_count: 0,
+              generated_at: new Date().toISOString(),
+              selected: false,
+              deleted: false,
+              edited: false,
+              saved_for_later: false,
+              rss_added: false,
+              is_ad_candidate: false,
             })
             .select()
             .single()
@@ -337,18 +343,24 @@ export async function POST(
             const hashtagLength = variation.hashtags.join(' ').length + 1 // +1 for space
             const maxCaptionLength = 275 - hashtagLength // Leave 5 char buffer
             variation.caption = variation.caption.substring(0, maxCaptionLength).trim() + '...'
-          }
-          
-          const { data: post, error: postError } = await supabase
+          }          const { data: post, error: postError } = await supabase
             .from('posts')
             .insert({
               client_id: submission.client_id,
-              submission_id: submission.id,
-              platform: 'instagram',
               caption_text: variation.caption,
               hashtags: variation.hashtags,
               image_url: image.url,
-              status: 'draft',
+              caption_style: variation.style || 'short_statement',
+              caption_length: variation.caption.length,
+              hashtag_count: variation.hashtags.length,
+              emoji_count: variation.emojiCount || 0,
+              generated_at: new Date().toISOString(),
+              selected: false,
+              deleted: false,
+              edited: false,
+              saved_for_later: false,
+              rss_added: false,
+              is_ad_candidate: false,
             })
             .select()
             .single()
