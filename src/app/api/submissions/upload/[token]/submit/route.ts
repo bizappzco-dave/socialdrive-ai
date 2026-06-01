@@ -267,7 +267,7 @@ export async function POST(
               platform: 'instagram',
               caption_text: caption,
               hashtags: hashtags,
-              image_urls: [image.url],
+              image_url: image.url,
               status: 'draft',
             })
             .select()
@@ -347,7 +347,7 @@ export async function POST(
               platform: 'instagram',
               caption_text: variation.caption,
               hashtags: variation.hashtags,
-              image_urls: [image.url],
+              image_url: image.url,
               status: 'draft',
             })
             .select()
