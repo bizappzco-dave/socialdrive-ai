@@ -45,7 +45,6 @@ export async function generateCaptions(
               source: {
                 type: 'url',
                 url: imageUrl,
-                media_type: 'image/jpeg',
               },
             },
             {

@@ -201,7 +201,7 @@ export async function POST(
     
     // Ensure hashtags is an array (handle both string and array from DB)
     if (typeof context.hashtags === 'string') {
-      context.hashtags = context.hashtags.split(' ').filter(t => t.trim())
+      context.hashtags = context.hashtags.split(' ').filter((t: string) => t.trim())
     } else if (!Array.isArray(context.hashtags)) {
       context.hashtags = []
     }
@@ -374,7 +374,7 @@ export async function POST(
         const { promisify } = await import('util')
         const execPromise = promisify(exec)
         
-        const imagePaths = images.map(img => img.url).join(' ')
+        const imagePaths = images.map((img: any) => img.url).join(' ')
         const platformArg = platforms.join(',')
         const baseOutputPath = `/tmp/${type}-${submission.id}`
         

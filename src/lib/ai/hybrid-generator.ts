@@ -165,9 +165,15 @@ async function generateWithClaude(params: {
     if (parsed.caption === 'INVALID_CAPTION_RETRY') {
       console.error('✗ Caption validation failed after 2 retries, using fallback')
       // Return a safe fallback caption
+      const fallbackHashtags = brandContext.hashtags 
+        ? (Array.isArray(brandContext.hashtags) 
+          ? brandContext.hashtags 
+          : (brandContext.hashtags as string).split(' '))
+        : ['#Business']
+      
       return {
         caption: `Check out our latest at ${brandContext.brand_name}!`,
-        hashtags: brandContext.hashtags ? (Array.isArray(brandContext.hashtags) ? brandContext.hashtags : brandContext.hashtags.split(' ')) : ['#Business'],
+        hashtags: fallbackHashtags,
         style: 'premium',
         emojiCount: 0,
       }
@@ -445,7 +451,7 @@ function parseClaudeResponse(response: string, brandContext: BrandContext): {
     if (Array.isArray(defaultTags)) {
       hashtags = defaultTags
     } else if (typeof defaultTags === 'string') {
-      hashtags = defaultTags.split(' ').filter(t => t.trim())
+      hashtags = (defaultTags as string).split(' ').filter((t: string) => t.trim())
     }
   }
   

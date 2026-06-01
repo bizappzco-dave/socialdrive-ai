@@ -56,24 +56,35 @@ export async function POST(
       })
       .eq('id', params.id)
     
-    // Prepare generation params
-    const generateParams = {
-      images: images.map((img: any) => img.url),
-      brief: submission.brief_text || '',
-      clientName: submission.clients?.name || 'Client',
-      industry: submission.clients?.industry || '',
-      platforms: submission.platforms || ['instagram'],
-      tier: submission.clients?.tier || 'simple',
-      submissionType: submission.submission_type || 'images',
-    }
+    // Prepare generation params - process each image separately
+    const results = []
     
-    console.log('Starting generation with params:', generateParams)
-    
-    // Generate posts
-    const result = await generatePostVariationsHybrid(generateParams)
-    
-    if (!result.success || !result.posts || result.posts.length === 0) {
-      throw new Error(result.error || 'Generation failed')
+    for (const image of images) {
+      const generateParams = {
+        imageUrl: image.url,
+        brandContext: {
+          brand_name: submission.clients?.name || 'Client',
+          industry: submission.clients?.industry || '',
+          location: '',
+          target_audience: '',
+          tone: 'professional',
+          personality: 'engaging'
+        },
+        clientTier: (submission.clients?.tier === 'premium' ? 'premium' : 'standard') as 'standard' | 'premium',
+        count: 3,
+        briefText: submission.brief_text || ''
+      }
+      
+      console.log('Starting generation for image:', image.url)
+      
+      // Generate posts
+      const posts = await generatePostVariationsHybrid(generateParams)
+      
+      if (!posts || posts.length === 0) {
+        throw new Error('Generation failed - no posts returned')
+      }
+      
+      results.push(...posts)
     }
     
     // Update submission with generated posts
@@ -86,11 +97,11 @@ export async function POST(
     // Save posts to database (simplified - adjust based on your schema)
     // Note: You may need to adjust this based on your actual posts table structure
     
-    console.log(`✅ Successfully generated ${result.posts.length} posts for submission ${params.id}`)
+    console.log(`✅ Successfully generated ${results.length} posts for submission ${params.id}`)
     
     return NextResponse.json({
       success: true,
-      posts: result.posts.length,
+      posts: results.length,
       message: 'Generation complete'
     })
     

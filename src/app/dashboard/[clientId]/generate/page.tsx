@@ -6,15 +6,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { GeneratePostsButton } from '@/components/dashboard/GeneratePostsButton'
 import { Image, Sparkles, ArrowRight } from 'lucide-react'
-
-interface Post {
-  id: string
-  caption_text: string
-  image_url: string
-  caption_style: string
-  selected: boolean
-  generated_at: string
-}
+import { Post } from '@/types/post'
 
 export default function GeneratePostsPage() {
   const params = useParams()

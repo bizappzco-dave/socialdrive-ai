@@ -18,6 +18,7 @@ interface Post {
 
 interface Submission {
   id: string
+  client_id: string
   client_name: string
   status: string
   post_count: number

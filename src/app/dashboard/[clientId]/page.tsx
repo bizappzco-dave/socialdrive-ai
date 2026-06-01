@@ -142,7 +142,7 @@ export default function ClientDashboardPage() {
       const csvContent = await blob.text()
       
       // Save to Google Drive (if configured)
-      if (client?.drive_folder_id) {
+      if (client?.drive_folder_url) {
         // TODO: Upload to Google Drive
         // For now, mark posts as approved
       }

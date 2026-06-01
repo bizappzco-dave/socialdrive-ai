@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 
 export interface ClientFeatures {
   auto_captions: boolean
@@ -47,7 +47,7 @@ export async function checkFeature(
   clientId: string,
   feature: keyof ClientFeatures
 ): Promise<boolean> {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const { data, error } = await supabase
     .from('clients')
@@ -68,7 +68,7 @@ export async function checkFeature(
  * Get all features for a client
  */
 export async function getClientFeatures(clientId: string): Promise<ClientFeatures> {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const { data, error } = await supabase
     .from('clients')

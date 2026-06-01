@@ -3,7 +3,7 @@
 // Extract structured brand profile data from conversations
 // ============================================
 
-import { createClient } from '@/lib/supabase/admin'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 interface ConversationMessage {
   role: 'assistant' | 'user'
@@ -142,7 +142,7 @@ export async function saveExtractedBrandData(
   clientId: string, 
   brandData: ExtractedBrandData
 ): Promise<void> {
-  const supabase = createClient()
+  const supabase = createAdminClient()
 
   const { error } = await supabase
     .from('brand_contexts')
@@ -167,7 +167,7 @@ export async function saveExtractedBrandData(
 export async function getConversationForClient(
   clientId: string
 ): Promise<OnboardingConversation | null> {
-  const supabase = createClient()
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from('onboarding_conversations')
@@ -201,7 +201,7 @@ export async function queryOnboardingData(
     limit?: number
   }
 ) {
-  const supabase = createClient()
+  const supabase = createAdminClient()
   
   let query = supabase
     .from('onboarding_conversations')
