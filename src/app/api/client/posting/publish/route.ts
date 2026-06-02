@@ -99,7 +99,7 @@ export async function POST(request: Request) {
         const formData = new FormData()
         formData.append('caption', post.caption || '')
         formData.append('hashtags', JSON.stringify(post.hashtags || []))
-        formData.append('platform[]', 'instagram')  // Use platform[] format
+        formData.append('platform[]', 'instagram')
         formData.append('user', profileUsername)
         formData.append('async_upload', 'true')
 
@@ -107,9 +107,8 @@ export async function POST(request: Request) {
         if (hasVideo && post.image_urls?.length > 0) {
           formData.append('video_url', post.image_urls[0])
         } else if (post.image_urls?.length > 0) {
-          post.image_urls.forEach((url: string, index: number) => {
-            formData.append(`photos[${index}]`, url)  // Field name is 'photos[]', not 'image_urls[]'
-          })
+          // Send URLs as JSON array string (Upload-Post supports both formats)
+          formData.append('photos', JSON.stringify(post.image_urls))
         } else {
           uploadResults.push({ post_id: post.id, success: false, error: 'No media found' })
           continue
