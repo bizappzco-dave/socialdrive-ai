@@ -10,12 +10,18 @@ export default async function ClientPostingPage() {
   const supabase = createAdminClient()
 
   // Load posts (not submissions) - using actual schema columns
-  const { data: posts } = await supabase
+  const { data: posts, error: postsError } = await supabase
     .from('posts')
     .select('id, submission_id, caption, hashtags, image_urls, platform, status, scheduled_for, created_at')
     .eq('client_id', accessResult.access.clientId)
     .order('created_at', { ascending: false })
     .limit(50)
+
+  if (postsError) {
+    console.error('Failed to load posts:', postsError)
+  }
+
+  console.log('Loaded posts:', posts?.length, 'for client:', accessResult.access.clientId)
 
   return (
     <div className="space-y-6">
