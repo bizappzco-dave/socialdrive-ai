@@ -91,18 +91,32 @@ export async function POST(request: Request) {
 
     for (const post of filteredPosts) {
       try {
+        console.log(`[Upload-Post] Processing post ${post.id}:`, {
+          image_urls: post.image_urls,
+          caption: post.caption?.slice(0, 50),
+        })
+        
         // Generate signed URLs for images (valid for 1 hour)
         const rawImageUrls = post.image_urls || []
         const safeImageUrls = Array.isArray(rawImageUrls) ? rawImageUrls : []
         let publicImageUrls = safeImageUrls
         
+        console.log(`[Upload-Post] Safe image URLs:`, safeImageUrls)
+        
         if (safeImageUrls.length > 0 && safeImageUrls[0]?.includes('supabase.co/storage')) {
           // Convert storage URLs to signed URLs
-          const { data: urlData } = await supabase.storage
+          console.log(`[Upload-Post] Generating signed URLs for ${safeImageUrls.length} images...`)
+          const { data: urlData, error: urlError } = await supabase.storage
             .from('submissions')
             .createSignedUrls(safeImageUrls, 3600) // 1 hour expiry
+          
+          if (urlError) {
+            console.error('[Upload-Post] Signed URL error:', urlError)
+          }
+          
           if (urlData && Array.isArray(urlData)) {
             publicImageUrls = urlData.map((u: any) => u.signedUrl).filter(Boolean)
+            console.log(`[Upload-Post] Generated ${publicImageUrls.length} signed URLs`)
           }
         }
         
@@ -110,6 +124,8 @@ export async function POST(request: Request) {
         const hasVideo = publicImageUrls && publicImageUrls.length > 0 && 
           publicImageUrls.some((url: string) => url && (url.includes('.mp4') || url.includes('video')))
         const uploadEndpoint = hasVideo ? '/upload' : '/upload_photos'
+        
+        console.log(`[Upload-Post] Final public URLs:`, publicImageUrls, 'hasVideo:', hasVideo)
         
         // Build form data
         const formData = new FormData()
