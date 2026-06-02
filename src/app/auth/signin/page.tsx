@@ -43,14 +43,9 @@ export default function SignInPage() {
       const supabase = createClient()
       console.log('Supabase client created')
       
-      // Use redirectTo to let Supabase handle the session cookies properly
       const result = await supabase.auth.signInWithPassword({
         email,
         password,
-        options: {
-          // Redirect back to this page after auth completes
-          redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`,
-        },
       })
       
       console.log('Sign-in result:', result)
@@ -60,8 +55,9 @@ export default function SignInPage() {
         throw result.error
       }
 
-      console.log('Sign-in successful, waiting for redirect...')
-      // Supabase will handle the redirect via the callback
+      console.log('Sign-in successful, redirecting...')
+      // Full page reload to ensure session cookies persist
+      window.location.href = '/client/posting'
     } catch (err: any) {
       console.error('Sign-in failed:', err)
       setError(err.message || 'Failed to sign in')
