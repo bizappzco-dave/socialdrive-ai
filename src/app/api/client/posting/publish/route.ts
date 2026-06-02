@@ -93,7 +93,7 @@ export async function POST(request: Request) {
       try {
         // Generate signed URLs for images (valid for 1 hour)
         let publicImageUrls = post.image_urls || []
-        if (publicImageUrls.length > 0 && publicImageUrls[0]?.includes('supabase.co/storage')) {
+        if (Array.isArray(publicImageUrls) && publicImageUrls.length > 0 && publicImageUrls[0]?.includes('supabase.co/storage')) {
           // Convert storage URLs to signed URLs
           const { data: urlData } = await supabase.storage
             .from('submissions')
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
         }
         
         // Determine upload endpoint based on media type
-        const hasVideo = publicImageUrls.some((url: string) => url.includes('.mp4') || url.includes('video'))
+        const hasVideo = Array.isArray(publicImageUrls) && publicImageUrls.some((url: string) => url.includes('.mp4') || url.includes('video'))
         const uploadEndpoint = hasVideo ? '/upload' : '/upload_photos'
         
         // Build form data
