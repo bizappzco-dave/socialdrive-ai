@@ -56,6 +56,14 @@ export default function SignInPage() {
       }
 
       console.log('Sign-in successful, redirecting...')
+      
+      // Refresh session to ensure cookies are fully set
+      await supabase.auth.refreshSession()
+      console.log('Session refreshed')
+      
+      // Small delay to ensure cookies propagate
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
       // Full page reload to ensure session cookies persist
       window.location.href = '/client/posting'
     } catch (err: any) {
