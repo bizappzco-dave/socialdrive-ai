@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function SignInPage() {
   const router = useRouter()
@@ -11,6 +11,19 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [magicLinkSent, setMagicLinkSent] = useState(false)
+
+  // Check if already logged in on mount
+  useEffect(() => {
+    async function checkSession() {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        console.log('Already have session, redirecting...')
+        router.push('/client/posting')
+      }
+    }
+    checkSession()
+  }, [router])
 
   async function handleMagicLinkSignIn(e: React.FormEvent) {
     e.preventDefault()
@@ -35,44 +48,25 @@ export default function SignInPage() {
 
   async function handlePasswordSignIn(e: React.FormEvent) {
     e.preventDefault()
-    console.log('Starting sign-in for:', email)
     setLoading(true)
     setError(null)
 
     try {
       const supabase = createClient()
-      console.log('Supabase client created')
       
       const result = await supabase.auth.signInWithPassword({
         email,
         password,
       })
-      
-      console.log('Sign-in result:', result)
 
       if (result.error) {
-        console.error('Sign-in error:', result.error)
         throw result.error
       }
 
-      console.log('Sign-in successful, redirecting...')
-      
-      // Check what cookies were set
-      console.log('Cookies after sign-in:', document.cookie)
-      
-      // Refresh session to ensure cookies are fully set
-      await supabase.auth.refreshSession()
-      console.log('Session refreshed')
-      console.log('Cookies after refresh:', document.cookie)
-      
-      // Small delay to ensure cookies propagate
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      // Full page reload to ensure session cookies persist
-      console.log('Redirecting to /client/posting...')
-      window.location.href = '/client/posting'
+      // Use router.push instead of window.location.href
+      // This keeps the React app mounted and preserves cookies
+      router.push('/client/posting')
     } catch (err: any) {
-      console.error('Sign-in failed:', err)
       setError(err.message || 'Failed to sign in')
       setLoading(false)
     }
