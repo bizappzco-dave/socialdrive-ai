@@ -92,19 +92,23 @@ export async function POST(request: Request) {
     for (const post of filteredPosts) {
       try {
         // Generate signed URLs for images (valid for 1 hour)
-        let publicImageUrls = post.image_urls || []
-        if (Array.isArray(publicImageUrls) && publicImageUrls.length > 0 && publicImageUrls[0]?.includes('supabase.co/storage')) {
+        const rawImageUrls = post.image_urls || []
+        const safeImageUrls = Array.isArray(rawImageUrls) ? rawImageUrls : []
+        let publicImageUrls = safeImageUrls
+        
+        if (safeImageUrls.length > 0 && safeImageUrls[0]?.includes('supabase.co/storage')) {
           // Convert storage URLs to signed URLs
           const { data: urlData } = await supabase.storage
             .from('submissions')
-            .createSignedUrls(publicImageUrls, 3600) // 1 hour expiry
-          if (urlData) {
-            publicImageUrls = urlData.map((u: any) => u.signedUrl)
+            .createSignedUrls(safeImageUrls, 3600) // 1 hour expiry
+          if (urlData && Array.isArray(urlData)) {
+            publicImageUrls = urlData.map((u: any) => u.signedUrl).filter(Boolean)
           }
         }
         
         // Determine upload endpoint based on media type
-        const hasVideo = Array.isArray(publicImageUrls) && publicImageUrls.some((url: string) => url.includes('.mp4') || url.includes('video'))
+        const hasVideo = publicImageUrls && publicImageUrls.length > 0 && 
+          publicImageUrls.some((url: string) => url && (url.includes('.mp4') || url.includes('video')))
         const uploadEndpoint = hasVideo ? '/upload' : '/upload_photos'
         
         // Build form data
@@ -116,16 +120,17 @@ export async function POST(request: Request) {
         formData.append('async_upload', 'true')
 
         // Add media based on type
-        if (hasVideo && publicImageUrls.length > 0) {
-          formData.append('video_url', publicImageUrls[0])
-        } else if (publicImageUrls.length > 0) {
-          // Try sending as repeated fields with literal brackets
-          publicImageUrls.forEach((url: string, index: number) => {
-            formData.append('photos[]', url)
-          })
-        } else {
+        if (!publicImageUrls || publicImageUrls.length === 0) {
           uploadResults.push({ post_id: post.id, success: false, error: 'No media found' })
           continue
+        }
+        
+        if (hasVideo) {
+          formData.append('video_url', publicImageUrls[0])
+        } else {
+          publicImageUrls.forEach((url: string) => {
+            if (url) formData.append('photos[]', url)
+          })
         }
 
         // Call Upload-Post API
