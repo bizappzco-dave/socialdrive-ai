@@ -2,9 +2,9 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
@@ -28,7 +28,8 @@ export default function AuthCallbackPage() {
         }
 
         // Redirect to client posting dashboard
-        router.push('/client/posting')
+        const next = searchParams.get('next') || '/client/posting'
+        router.push(next)
       } catch (err: any) {
         setError(err.message || 'Authentication failed')
       }
@@ -59,5 +60,20 @@ export default function AuthCallbackPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <AuthCallbackContent />
+    </Suspense>
   )
 }
