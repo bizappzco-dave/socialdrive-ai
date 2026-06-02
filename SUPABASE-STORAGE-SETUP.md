@@ -4,7 +4,7 @@
 
 ### Step 1: Go to Storage
 
-1. Open: https://dqhnxzaktnejasqlfrjf.supabase.co
+1. Open: https://nmebpawvnhrokouksvir.supabase.co
 2. Click **Storage** in left sidebar
 3. Click **New bucket**
 

@@ -62,7 +62,7 @@ module.exports = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'dqhnxzaktnejasqlfrjf.supabase.co',
+        hostname: 'nmebpawvnhrokouksvir.supabase.co',
         pathname: '/storage/v1/object/public/submissions/**',
       },
     ],

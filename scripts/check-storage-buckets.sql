@@ -1,5 +1,5 @@
 -- Check if 'submissions' bucket exists
--- Run this in Supabase SQL Editor: https://supabase.com/dashboard/project/dqhnxzaktnejasqlfrjf/sql
+-- Run this in Supabase SQL Editor: https://supabase.com/dashboard/project/nmebpawvnhrokouksvir/sql
 
 SELECT 
   id,

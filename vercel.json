@@ -1,8 +1,6 @@
 {
   "build": {
     "env": {
-      "NEXT_PUBLIC_SUPABASE_URL": "https://dqhnxzaktnejasqlfrjf.supabase.co",
-      "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxaG54emFrdG5lamFzcWxmcmpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU1MjMyMzQsImV4cCI6MjA2MTEwNjQzNH0.Y1G1KqU8R3bDlFPLCr1gNvS8hQb9soY",
       "NEXTAUTH_URL": "https://socialdrive-ai.vercel.app"
     }
   }

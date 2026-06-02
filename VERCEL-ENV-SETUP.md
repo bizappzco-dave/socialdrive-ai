@@ -18,7 +18,7 @@
 |------|-------|
 | `NEXTAUTH_URL` | `https://socialdrive-ai.vercel.app` |
 | `NEXTAUTH_SECRET` | `change-this-to-a-random-string-later` (or generate new one) |
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://dqhnxzaktnejasqlfrjf.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://nmebpawvnhrokouksvir.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxaG54emFrdG5lamFzcWxmcmpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2Mzc5NDQsImV4cCI6MjA5MzIxMzk0NH0.XXdChx8pqA-KjIBGeBTBp5NLsZLoMs_YySFEsHS_RNc` |
 | `SUPABASE_SERVICE_ROLE_KEY` | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxaG54emFrdG5lamFzcWxmcmpmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzYzNzk0NCwiZXhwIjoyMDkzMjEzOTQ0fQ.fN3J5CIs5BMuSCYNFBvV0ZLPHGhyyeNdtdOjUA59soY` |
 

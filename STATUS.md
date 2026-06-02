@@ -143,7 +143,7 @@
 
 ```bash
 # Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://dqhnxzaktnejasqlfrjf.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://nmebpawvnhrokouksvir.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
 SUPABASE_SERVICE_ROLE_KEY=xxx
 

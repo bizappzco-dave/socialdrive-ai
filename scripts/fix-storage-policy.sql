@@ -1,5 +1,5 @@
 -- Fix: Allow public read access to submission images
--- Run this in Supabase SQL Editor: https://dqhnxzaktnejasqlfrjf.supabase.co/app/sql
+-- Run this in Supabase SQL Editor: https://nmebpawvnhrokouksvir.supabase.co/app/sql
 
 -- First, check if the policy already exists
 DO $$

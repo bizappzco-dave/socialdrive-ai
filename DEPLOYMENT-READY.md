@@ -36,7 +36,7 @@ git push origin main
 ### Step 3: Database Migration ⏳
 ```sql
 -- Run in Supabase SQL Editor
--- URL: https://supabase.com/dashboard/project/dqhnxzaktnejasqlfrjf/sql/new
+-- URL: https://supabase.com/dashboard/project/nmebpawvnhrokouksvir/sql/new
 
 ALTER TABLE clients
 ADD COLUMN IF NOT EXISTS features_enabled jsonb DEFAULT '{}'::jsonb;

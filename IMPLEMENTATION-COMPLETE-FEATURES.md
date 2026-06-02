@@ -40,7 +40,7 @@
 
 ### Step 1: Add Database Column
 ```bash
-# Go to: https://supabase.com/dashboard/project/dqhnxzaktnejasqlfrjf/sql/new
+# Go to: https://supabase.com/dashboard/project/nmebpawvnhrokouksvir/sql/new
 # Copy and run: add-features-column.sql
 ```
 

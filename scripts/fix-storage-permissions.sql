@@ -1,5 +1,5 @@
 -- Fix Storage Permissions
--- Run this in Supabase SQL Editor: https://supabase.com/dashboard/project/dqhnxzaktnejasqlfrjf/sql
+-- Run this in Supabase SQL Editor: https://supabase.com/dashboard/project/nmebpawvnhrokouksvir/sql
 
 -- 1. Check if bucket exists
 SELECT id, name, public 

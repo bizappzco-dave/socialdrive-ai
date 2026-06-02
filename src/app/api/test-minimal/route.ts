@@ -5,11 +5,11 @@ import Anthropic from '@anthropic-ai/sdk'
 export async function GET() {
   const results: any = {}
   
-  // Test 1: Supabase with hardcoded key
+  // Test 1: Supabase with env vars
   try {
     const supabase = createClient(
-      'https://dqhnxzaktnejasqlfrjf.supabase.co',
-      'REDACTED'
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_ANON_KEY!
     )
     const { data, error } = await supabase.from('clients').select('id').limit(1)
     if (error) throw error

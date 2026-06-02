@@ -3,7 +3,7 @@
 ## Step 1: Add Database Column
 
 **Go to Supabase Dashboard:**
-1. Open: https://supabase.com/dashboard/project/dqhnxzaktnejasqlfrjf
+1. Open: https://supabase.com/dashboard/project/nmebpawvnhrokouksvir
 2. Go to **Table Editor** → **clients** table
 3. Click **+ Add Column**
 

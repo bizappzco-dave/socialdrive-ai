@@ -3,7 +3,7 @@
 ## Current Setup
 
 **Bucket:** `submissions`  
-**URL:** `https://dqhnxzaktnejasqlfrjf.supabase.co/storage/v1/object/public/submissions/`  
+**URL:** `https://nmebpawvnhrokouksvir.supabase.co/storage/v1/object/public/submissions/`  
 **Path structure:** `{client_id}/{timestamp}-{random}.{ext}`
 
 ---

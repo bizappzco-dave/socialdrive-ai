@@ -1,5 +1,5 @@
 -- Add features_enabled column to clients table
--- Run this in Supabase SQL Editor: https://supabase.com/dashboard/project/dqhnxzaktnejasqlfrjf/sql/new
+-- Run this in Supabase SQL Editor: https://supabase.com/dashboard/project/nmebpawvnhrokouksvir/sql/new
 
 ALTER TABLE clients
 ADD COLUMN IF NOT EXISTS features_enabled jsonb DEFAULT '{}'::jsonb;
