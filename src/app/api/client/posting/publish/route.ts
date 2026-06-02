@@ -100,7 +100,7 @@ export async function POST(request: Request) {
         formData.append('caption', post.caption || '')
         formData.append('hashtags', JSON.stringify(post.hashtags || []))
         formData.append('platforms', JSON.stringify(['instagram']))
-        formData.append('username', profileUsername)
+        formData.append('user', profileUsername)  // Field name is 'user', not 'username'
         formData.append('async_upload', 'true')
 
         // Add media based on type
