@@ -99,8 +99,8 @@ export async function POST(request: Request) {
         const formData = new FormData()
         formData.append('caption', post.caption || '')
         formData.append('hashtags', JSON.stringify(post.hashtags || []))
-        formData.append('platforms', JSON.stringify(['instagram']))
-        formData.append('user', profileUsername)  // Field name is 'user', not 'username'
+        formData.append('platform[]', 'instagram')  // Use platform[] format
+        formData.append('user', profileUsername)
         formData.append('async_upload', 'true')
 
         // Add media based on type
