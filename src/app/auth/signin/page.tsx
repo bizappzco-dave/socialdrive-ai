@@ -47,8 +47,8 @@ export default function SignInPage() {
 
       if (error) throw error
 
-      // Redirect to callback to ensure session is established
-      window.location.href = '/auth/callback?next=/client/posting'
+      // Full page reload to ensure cookies are set
+      window.location.href = '/client/posting'
     } catch (err: any) {
       setError(err.message || 'Failed to sign in')
       setLoading(false)
