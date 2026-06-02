@@ -9,32 +9,22 @@ export default function AuthCallbackPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    console.log('[Callback] Starting handleCallback')
     async function handleCallback() {
       try {
         const supabase = createClient()
-        console.log('[Callback] Getting session...')
         
         // Get current session
         const { data, error } = await supabase.auth.getSession()
         
-        console.log('[Callback] Session data:', data?.session ? 'HAS SESSION' : 'NO SESSION', 'Error:', error?.message || 'none')
-        
-        if (error) {
-          console.error('[Callback] Session error:', error)
-          throw error
-        }
+        if (error) throw error
         if (!data.session) {
-          console.error('[Callback] No session found')
           setError('No session found')
           return
         }
 
         // Redirect to posting dashboard
-        console.log('[Callback] Session valid, redirecting to posting')
         router.push('/client/posting')
       } catch (err: any) {
-        console.error('[Callback] Error:', err)
         setError(err.message || 'Authentication failed')
       }
     }

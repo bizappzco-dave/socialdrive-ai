@@ -4,10 +4,8 @@ import { NextResponse } from 'next/server'
 
 export async function middleware(request: NextRequest) {
   try {
-    console.log('[Middleware] Starting middleware for:', request.url)
     // Update session, this will also call `supabase.auth.getUser()`
     const supabaseResponse = await updateSession(request)
-    console.log('[Middleware] Returning response')
     return supabaseResponse
   } catch (error) {
     console.error('Middleware error:', error)

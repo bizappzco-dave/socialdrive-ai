@@ -4,14 +4,8 @@ import { redirect } from 'next/navigation'
 import PostingQueueClient from './PostingQueueClient'
 
 export default async function ClientPostingPage() {
-  console.log('[Posting Page] Starting...')
   const accessResult = await getCurrentUserClientAccess()
-  console.log('[Posting Page] Access result:', accessResult ? 'GOT ACCESS' : 'NULL')
-  
-  if (!accessResult) {
-    console.log('[Posting Page] No access, redirecting to signin')
-    redirect('/auth/signin?returnTo=/client/posting')
-  }
+  if (!accessResult) redirect('/auth/signin?returnTo=/client/posting')
 
   const supabase = createAdminClient()
 

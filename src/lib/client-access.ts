@@ -21,11 +21,8 @@ export function hasRoleAtLeast(current: ClientRole, minimum: ClientRole): boolea
 }
 
 export async function getCurrentUserClientAccess(): Promise<{ userId: string; access: ClientAccess } | null> {
-  console.log('[ClientAccess] Getting current user access...')
   const supabase = await createClient()
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
-  
-  console.log('[ClientAccess] User:', user?.id || 'null', 'Error:', userError?.message || 'none')
+  const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) return null
 

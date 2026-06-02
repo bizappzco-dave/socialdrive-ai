@@ -48,31 +48,24 @@ export default function SignInPage() {
 
   async function handlePasswordSignIn(e: React.FormEvent) {
     e.preventDefault()
-    console.log('Sign-in attempt:', email)
     setLoading(true)
     setError(null)
 
     try {
       const supabase = createClient()
-      console.log('Calling signInWithPassword...')
       
       const result = await supabase.auth.signInWithPassword({
         email,
         password,
       })
-      
-      console.log('Sign-in result:', result)
 
       if (result.error) {
-        console.error('Sign-in error:', result.error)
         throw result.error
       }
 
-      console.log('Success! Redirecting...')
       // Redirect to callback page which handles session and redirects to posting
       router.push('/auth/callback?returnTo=/client/posting')
     } catch (err: any) {
-      console.error('Sign-in failed:', err)
       setError(err.message || 'Failed to sign in')
       setLoading(false)
     }

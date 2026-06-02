@@ -9,9 +9,6 @@ export async function updateSession(request: NextRequest) {
     throw new Error('Supabase credentials not configured')
   }
   
-  console.log('[Middleware] Request URL:', request.url)
-  console.log('[Middleware] Cookies:', request.cookies.getAll().map(c => ({ name: c.name, value: c.value?.substring(0, 20) + '...' })))
-  
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -39,10 +36,7 @@ export async function updateSession(request: NextRequest) {
 
   const {
     data: { user },
-    error,
   } = await supabase.auth.getUser()
-  
-  console.log('[Middleware] User:', user?.id || 'null', 'Error:', error?.message || 'none')
 
   return supabaseResponse
 }
