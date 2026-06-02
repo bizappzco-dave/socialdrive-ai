@@ -33,7 +33,24 @@ export default function PostingQueueClient({ items }: { items: PostItem[] }) {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to create posting job')
-      setMessage(`Created posting job for post ${postId.slice(0, 8)}... - ${data.message || ''}`)
+      
+      // Build success message based on response
+      let successMsg = `Created posting job for post ${postId.slice(0, 8)}...`
+      if (data.integration_mode === 'live' && data.upload_results) {
+        const result = data.upload_results.find((r: any) => r.post_id === postId)
+        if (result?.success) {
+          successMsg += ` - Live upload started! Request ID: ${result.request_id?.slice(0, 8)}...`
+          if (result.instagram_url) {
+            successMsg += ` View: ${result.instagram_url}`
+          }
+        } else if (result?.error) {
+          successMsg += ` - Upload failed: ${result.error}`
+        }
+      } else if (data.message) {
+        successMsg += ` - ${data.message}`
+      }
+      
+      setMessage(successMsg)
     } catch (e: any) {
       setMessage(`Error: ${e.message}`)
     } finally {
