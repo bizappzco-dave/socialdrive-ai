@@ -99,7 +99,6 @@ export async function POST(request: Request) {
         formData.append('caption', post.caption || '')
         formData.append('hashtags', JSON.stringify(post.hashtags || []))
         formData.append('platforms', JSON.stringify(['instagram']))
-        formData.append('profile_username', process.env.UPLOAD_POST_PROFILE_USERNAME || 'taskifiai@gmail.com')
         formData.append('async_upload', 'true')
 
         // Add media based on type
@@ -116,7 +115,9 @@ export async function POST(request: Request) {
         }
 
         // Call Upload-Post API with form data
-        const uploadResponse = await fetch(`${uploadPostBase}${uploadEndpoint}`, {
+        // Note: username goes in URL query param, not form body
+        const profileUsername = process.env.UPLOAD_POST_PROFILE_USERNAME || 'taskifiai@gmail.com'
+        const uploadResponse = await fetch(`${uploadPostBase}${uploadEndpoint}?username=${encodeURIComponent(profileUsername)}`, {
           method: 'POST',
           headers: {
             'Authorization': `Apikey ${uploadPostApiKey}`,
