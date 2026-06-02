@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 type PostItem = {
   id: string
+  submission_id: string
   caption: string
   hashtags: string[]
   image_urls: string[]

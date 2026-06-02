@@ -12,7 +12,7 @@ export default async function ClientPostingPage() {
   // Load posts (not submissions) - using actual schema columns
   const { data: posts } = await supabase
     .from('posts')
-    .select('id, caption, hashtags, image_urls, platform, status, scheduled_for, created_at')
+    .select('id, submission_id, caption, hashtags, image_urls, platform, status, scheduled_for, created_at')
     .eq('client_id', accessResult.access.clientId)
     .order('created_at', { ascending: false })
     .limit(50)
