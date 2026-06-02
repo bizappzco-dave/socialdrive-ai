@@ -91,8 +91,20 @@ export async function POST(request: Request) {
 
     for (const post of filteredPosts) {
       try {
+        // Generate signed URLs for images (valid for 1 hour)
+        let publicImageUrls = post.image_urls || []
+        if (publicImageUrls.length > 0 && publicImageUrls[0]?.includes('supabase.co/storage')) {
+          // Convert storage URLs to signed URLs
+          const { data: urlData } = await supabase.storage
+            .from('submissions')
+            .createSignedUrls(publicImageUrls, 3600) // 1 hour expiry
+          if (urlData) {
+            publicImageUrls = urlData.map((u: any) => u.signedUrl)
+          }
+        }
+        
         // Determine upload endpoint based on media type
-        const hasVideo = post.image_urls?.some((url: string) => url.includes('.mp4') || url.includes('video'))
+        const hasVideo = publicImageUrls.some((url: string) => url.includes('.mp4') || url.includes('video'))
         const uploadEndpoint = hasVideo ? '/upload' : '/upload_photos'
         
         // Build form data
@@ -104,11 +116,11 @@ export async function POST(request: Request) {
         formData.append('async_upload', 'true')
 
         // Add media based on type
-        if (hasVideo && post.image_urls?.length > 0) {
-          formData.append('video_url', post.image_urls[0])
-        } else if (post.image_urls?.length > 0) {
-          // Try sending as indexed fields with literal brackets
-          post.image_urls.forEach((url: string, index: number) => {
+        if (hasVideo && publicImageUrls.length > 0) {
+          formData.append('video_url', publicImageUrls[0])
+        } else if (publicImageUrls.length > 0) {
+          // Try sending as repeated fields with literal brackets
+          publicImageUrls.forEach((url: string, index: number) => {
             formData.append('photos[]', url)
           })
         } else {
