@@ -30,13 +30,12 @@ export async function POST(request: Request) {
 
     const supabase = createAdminClient()
 
-    // Load selected posts for this submission/client
+    // Load posts for this submission/client (using actual schema: caption, image_urls, platform, status)
     let postsQuery = supabase
       .from('posts')
-      .select('id, caption_text, image_url, video_url, post_type, hashtags, selected, deleted')
+      .select('id, caption, hashtags, image_urls, platform, status, scheduled_for, created_at')
       .eq('client_id', accessResult.access.clientId)
       .eq('submission_id', submission_id)
-      .eq('selected', true)
 
     if (post_ids.length > 0) {
       postsQuery = postsQuery.in('id', post_ids)
@@ -45,16 +44,7 @@ export async function POST(request: Request) {
     let { data: postsData, error } = await postsQuery
     let posts: any[] = (postsData as any[]) || []
 
-    // Backward-compatible fallback if deleted/selected columns differ
-    if (error) {
-      const fallback = await supabase
-        .from('posts')
-        .select('id, caption_text, image_url, video_url, post_type, hashtags')
-        .eq('client_id', accessResult.access.clientId)
-        .eq('submission_id', submission_id)
-      if (fallback.error) throw fallback.error
-      posts = ((fallback.data as any[]) || []).filter((p: any) => post_ids.length === 0 || post_ids.includes(p.id))
-    }
+    if (error) throw error
 
     const filteredPosts = (posts || []).filter((p: any) => p && p.id)
 
