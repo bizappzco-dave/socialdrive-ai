@@ -87,7 +87,7 @@ export async function POST(request: Request) {
 
     // Call Upload-Post API for each post
     const uploadResults = []
-    const profileUsername = process.env.UPLOAD_POST_PROFILE_USERNAME || 'taskifiai@gmail.com'
+    const profileUsername = process.env.UPLOAD_POST_PROFILE_USERNAME || 'Taskifi-AI'
 
     for (const post of filteredPosts) {
       try {
