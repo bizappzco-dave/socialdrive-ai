@@ -12,18 +12,18 @@ export default function SignInPage() {
   const [error, setError] = useState<string | null>(null)
   const [magicLinkSent, setMagicLinkSent] = useState(false)
 
-  // Check if already logged in on mount
-  useEffect(() => {
-    async function checkSession() {
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        console.log('Already have session, redirecting...')
-        router.push('/client/posting')
-      }
-    }
-    checkSession()
-  }, [router])
+  // DISABLED: Auto-check session - causing redirect loop
+  // useEffect(() => {
+  //   async function checkSession() {
+  //     const supabase = createClient()
+  //     const { data: { session } } = await supabase.auth.getSession()
+  //     if (session) {
+  //       console.log('Already have session, redirecting...')
+  //       router.push('/client/posting')
+  //     }
+  //   }
+  //   checkSession()
+  // }, [router])
 
   async function handleMagicLinkSignIn(e: React.FormEvent) {
     e.preventDefault()
