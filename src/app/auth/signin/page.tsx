@@ -35,21 +35,31 @@ export default function SignInPage() {
 
   async function handlePasswordSignIn(e: React.FormEvent) {
     e.preventDefault()
+    console.log('Starting sign-in for:', email)
     setLoading(true)
     setError(null)
 
     try {
       const supabase = createClient()
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('Supabase client created')
+      
+      const result = await supabase.auth.signInWithPassword({
         email,
         password,
       })
+      
+      console.log('Sign-in result:', result)
 
-      if (error) throw error
+      if (result.error) {
+        console.error('Sign-in error:', result.error)
+        throw result.error
+      }
 
+      console.log('Sign-in successful, redirecting...')
       // Full page reload to ensure cookies are set
       window.location.href = '/client/posting'
     } catch (err: any) {
+      console.error('Sign-in failed:', err)
       setError(err.message || 'Failed to sign in')
       setLoading(false)
     }
