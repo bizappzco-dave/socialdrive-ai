@@ -108,7 +108,7 @@ export async function POST(request: Request) {
           formData.append('video_url', post.image_urls[0])
         } else if (post.image_urls?.length > 0) {
           post.image_urls.forEach((url: string, index: number) => {
-            formData.append(`image_urls[${index}]`, url)
+            formData.append(`photos[${index}]`, url)  // Field name is 'photos[]', not 'image_urls[]'
           })
         } else {
           uploadResults.push({ post_id: post.id, success: false, error: 'No media found' })
