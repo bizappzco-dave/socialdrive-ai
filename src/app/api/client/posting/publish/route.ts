@@ -72,8 +72,7 @@ export async function POST(request: Request) {
 
     if (jobError) throw jobError
 
-    // Optional Upload-Post live integration hook (kept safe for now)
-    // If credentials are missing, we still return local jobs so UI flow works.
+    // Optional Upload-Post live integration hook
     const uploadPostApiKey = process.env.UPLOAD_POST_API_KEY
     const uploadPostBase = process.env.UPLOAD_POST_BASE_URL || 'https://api.upload-post.com/api'
 
@@ -88,18 +87,20 @@ export async function POST(request: Request) {
 
     // Call Upload-Post API for each post
     const uploadResults = []
+    const profileUsername = process.env.UPLOAD_POST_PROFILE_USERNAME || 'taskifiai@gmail.com'
+
     for (const post of filteredPosts) {
       try {
         // Determine upload endpoint based on media type
         const hasVideo = post.image_urls?.some((url: string) => url.includes('.mp4') || url.includes('video'))
         const uploadEndpoint = hasVideo ? '/upload' : '/upload_photos'
         
-        // Call Upload-Post API with form data
+        // Build form data
         const formData = new FormData()
         formData.append('caption', post.caption || '')
         formData.append('hashtags', JSON.stringify(post.hashtags || []))
         formData.append('platforms', JSON.stringify(['instagram']))
-        formData.append('username', profileUsername) // Also add to form data
+        formData.append('username', profileUsername)
         formData.append('async_upload', 'true')
 
         // Add media based on type
@@ -110,14 +111,11 @@ export async function POST(request: Request) {
             formData.append(`image_urls[${index}]`, url)
           })
         } else {
-          // Skip if no media
           uploadResults.push({ post_id: post.id, success: false, error: 'No media found' })
           continue
         }
 
-        // Call Upload-Post API with form data
-        // Note: username goes in URL query param, not form body
-        const profileUsername = process.env.UPLOAD_POST_PROFILE_USERNAME || 'taskifiai@gmail.com'
+        // Call Upload-Post API
         const uploadResponse = await fetch(`${uploadPostBase}${uploadEndpoint}?username=${encodeURIComponent(profileUsername)}`, {
           method: 'POST',
           headers: {
