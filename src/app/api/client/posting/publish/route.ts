@@ -107,8 +107,10 @@ export async function POST(request: Request) {
         if (hasVideo && post.image_urls?.length > 0) {
           formData.append('video_url', post.image_urls[0])
         } else if (post.image_urls?.length > 0) {
-          // Send URLs as JSON array string (Upload-Post supports both formats)
-          formData.append('photos', JSON.stringify(post.image_urls))
+          // Try sending as indexed fields with literal brackets
+          post.image_urls.forEach((url: string, index: number) => {
+            formData.append('photos[]', url)
+          })
         } else {
           uploadResults.push({ post_id: post.id, success: false, error: 'No media found' })
           continue
