@@ -47,10 +47,10 @@ export default function SignInPage() {
 
       if (error) throw error
 
-      router.push('/client/posting')
+      // Redirect to callback to ensure session is established
+      window.location.href = '/auth/callback?next=/client/posting'
     } catch (err: any) {
       setError(err.message || 'Failed to sign in')
-    } finally {
       setLoading(false)
     }
   }
