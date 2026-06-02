@@ -99,6 +99,7 @@ export async function POST(request: Request) {
           caption: post.caption || '',
           hashtags: post.hashtags || [],
           platforms: ['instagram'],
+          profile_username: process.env.UPLOAD_POST_PROFILE_USERNAME || 'taskifiai@gmail.com',
           async_upload: true,
         }
 
