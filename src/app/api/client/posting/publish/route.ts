@@ -94,34 +94,34 @@ export async function POST(request: Request) {
         const hasVideo = post.image_urls?.some((url: string) => url.includes('.mp4') || url.includes('video'))
         const uploadEndpoint = hasVideo ? '/upload' : '/upload_photos'
         
-        // Prepare Upload-Post request
-        const uploadPayload = {
-          caption: post.caption || '',
-          hashtags: post.hashtags || [],
-          platforms: ['instagram'],
-          profile_username: process.env.UPLOAD_POST_PROFILE_USERNAME || 'taskifiai@gmail.com',
-          async_upload: true,
-        }
+        // Call Upload-Post API with form data
+        const formData = new FormData()
+        formData.append('caption', post.caption || '')
+        formData.append('hashtags', JSON.stringify(post.hashtags || []))
+        formData.append('platforms', JSON.stringify(['instagram']))
+        formData.append('profile_username', process.env.UPLOAD_POST_PROFILE_USERNAME || 'taskifiai@gmail.com')
+        formData.append('async_upload', 'true')
 
         // Add media based on type
         if (hasVideo && post.image_urls?.length > 0) {
-          ;(uploadPayload as any).video_url = post.image_urls[0]
+          formData.append('video_url', post.image_urls[0])
         } else if (post.image_urls?.length > 0) {
-          ;(uploadPayload as any).image_urls = post.image_urls
+          post.image_urls.forEach((url: string, index: number) => {
+            formData.append(`image_urls[${index}]`, url)
+          })
         } else {
           // Skip if no media
           uploadResults.push({ post_id: post.id, success: false, error: 'No media found' })
           continue
         }
 
-        // Call Upload-Post API
+        // Call Upload-Post API with form data
         const uploadResponse = await fetch(`${uploadPostBase}${uploadEndpoint}`, {
           method: 'POST',
           headers: {
             'Authorization': `Apikey ${uploadPostApiKey}`,
-            'Content-Type': 'application/json',
           },
-          body: JSON.stringify(uploadPayload),
+          body: formData,
         })
 
         const uploadData = await uploadResponse.json()
