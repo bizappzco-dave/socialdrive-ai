@@ -86,10 +86,79 @@ export async function POST(request: Request) {
       })
     }
 
+    // Call Upload-Post API for each post
+    const uploadResults = []
+    for (const post of filteredPosts) {
+      try {
+        // Determine upload endpoint based on media type
+        const hasVideo = post.image_urls?.some((url: string) => url.includes('.mp4') || url.includes('video'))
+        const uploadEndpoint = hasVideo ? '/upload' : '/upload_photos'
+        
+        // Prepare Upload-Post request
+        const uploadPayload = {
+          caption: post.caption || '',
+          hashtags: post.hashtags || [],
+          platforms: ['instagram'],
+          async_upload: true,
+        }
+
+        // Add media based on type
+        if (hasVideo && post.image_urls?.length > 0) {
+          ;(uploadPayload as any).video_url = post.image_urls[0]
+        } else if (post.image_urls?.length > 0) {
+          ;(uploadPayload as any).image_urls = post.image_urls
+        } else {
+          // Skip if no media
+          uploadResults.push({ post_id: post.id, success: false, error: 'No media found' })
+          continue
+        }
+
+        // Call Upload-Post API
+        const uploadResponse = await fetch(`${uploadPostBase}${uploadEndpoint}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Apikey ${uploadPostApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(uploadPayload),
+        })
+
+        const uploadData = await uploadResponse.json()
+
+        if (uploadResponse.ok && uploadData.success) {
+          uploadResults.push({
+            post_id: post.id,
+            success: true,
+            request_id: uploadData.request_id,
+            instagram_url: uploadData.results?.instagram?.url,
+          })
+
+          // Update posting job with Upload-Post request_id
+          await supabase
+            .from('posting_jobs')
+            .update({ upload_request_id: uploadData.request_id })
+            .eq('post_id', post.id)
+        } else {
+          uploadResults.push({
+            post_id: post.id,
+            success: false,
+            error: uploadData.error || uploadData.message || 'Upload failed',
+          })
+        }
+      } catch (uploadError: any) {
+        console.error(`Upload-Post error for post ${post.id}:`, uploadError)
+        uploadResults.push({
+          post_id: post.id,
+          success: false,
+          error: uploadError.message || 'Upload failed',
+        })
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      integration_mode: 'ready_for_live',
-      upload_post_base: uploadPostBase,
+      integration_mode: 'live',
+      upload_results: uploadResults,
       jobs: createdJobs || [],
     })
   } catch (err: any) {
