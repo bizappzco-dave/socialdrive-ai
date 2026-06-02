@@ -57,14 +57,19 @@ export default function SignInPage() {
 
       console.log('Sign-in successful, redirecting...')
       
+      // Check what cookies were set
+      console.log('Cookies after sign-in:', document.cookie)
+      
       // Refresh session to ensure cookies are fully set
       await supabase.auth.refreshSession()
       console.log('Session refreshed')
+      console.log('Cookies after refresh:', document.cookie)
       
       // Small delay to ensure cookies propagate
       await new Promise(resolve => setTimeout(resolve, 500))
       
       // Full page reload to ensure session cookies persist
+      console.log('Redirecting to /client/posting...')
       window.location.href = '/client/posting'
     } catch (err: any) {
       console.error('Sign-in failed:', err)
