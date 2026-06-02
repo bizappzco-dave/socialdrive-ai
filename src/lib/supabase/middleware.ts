@@ -9,6 +9,9 @@ export async function updateSession(request: NextRequest) {
     throw new Error('Supabase credentials not configured')
   }
   
+  console.log('[Middleware] Request URL:', request.url)
+  console.log('[Middleware] Cookies:', request.cookies.getAll().map(c => ({ name: c.name, value: c.value?.substring(0, 20) + '...' })))
+  
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -34,26 +37,12 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // IMPORTANT: Avoid writing any logic between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
-
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser()
-
-  // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
-  // creating a new response object with NextResponse.next() make sure to:
-  // 1. Pass the request in it, like so:
-  //    const myNewResponse = NextResponse.next({ request })
-  // 2. Copy over the cookies, like so:
-  //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
-  // 3. Change the myNewResponse object to fit your needs, but avoid changing
-  //    the cookies!
-  // 4. Finally:
-  //    return myNewResponse
-  // If this is not done, you may be causing the browser and server to go out
-  // of sync and terminate the user's session prematurely!
+  
+  console.log('[Middleware] User:', user?.id || 'null', 'Error:', error?.message || 'none')
 
   return supabaseResponse
 }
