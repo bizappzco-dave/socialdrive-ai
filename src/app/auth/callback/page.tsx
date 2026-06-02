@@ -1,12 +1,11 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState, Suspense } from 'react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
-function AuthCallbackContent() {
+export default function AuthCallbackPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -14,66 +13,48 @@ function AuthCallbackContent() {
       try {
         const supabase = createClient()
         
-        // Exchange the code for a session
-        const { error } = await supabase.auth.getSession()
+        // Get current session
+        const { data, error } = await supabase.auth.getSession()
         
         if (error) throw error
-
-        // Check if user has client access
-        const { data: { user } } = await supabase.auth.getUser()
-        
-        if (!user) {
-          setError('No user found')
+        if (!data.session) {
+          setError('No session found')
           return
         }
 
-        // Redirect to client posting dashboard
-        const next = searchParams.get('next') || '/client/posting'
-        router.push(next)
+        // Redirect to posting dashboard
+        router.push('/client/posting')
       } catch (err: any) {
         setError(err.message || 'Authentication failed')
       }
     }
 
     handleCallback()
-  }, [router, searchParams])
+  }, [router])
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="text-red-600 text-lg font-medium mb-2">Authentication Error</div>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => router.push('/auth/signin')}
+            className="text-blue-600 hover:underline"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
-        {error ? (
-          <>
-            <div className="text-red-600 text-lg font-medium mb-2">Authentication Error</div>
-            <p className="text-gray-600 mb-4">{error}</p>
-            <button
-              onClick={() => router.push('/auth/signin')}
-              className="text-blue-600 hover:underline"
-            >
-              Try again
-            </button>
-          </>
-        ) : (
-          <>
-            <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Completing sign in...</p>
-          </>
-        )}
+        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-gray-600">Completing sign in...</p>
       </div>
     </div>
-  )
-}
-
-export default function AuthCallbackPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    }>
-      <AuthCallbackContent />
-    </Suspense>
   )
 }
