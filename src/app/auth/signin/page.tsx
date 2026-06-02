@@ -69,7 +69,8 @@ export default function SignInPage() {
       }
 
       console.log('Success! Redirecting...')
-      router.push('/client/posting')
+      // Redirect to callback page which handles session and redirects to posting
+      router.push('/auth/callback?returnTo=/client/posting')
     } catch (err: any) {
       console.error('Sign-in failed:', err)
       setError(err.message || 'Failed to sign in')
