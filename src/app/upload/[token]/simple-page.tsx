@@ -26,6 +26,8 @@ export default function SimpleUploadPage() {
   const [templateMatch, setTemplateMatch] = useState<any>(null)
   const [generatedCaptions, setGeneratedCaptions] = useState<any[]>([])
   const [mcpError, setMcPError] = useState<string | null>(null)
+  const [showCaptionPicker, setShowCaptionPicker] = useState(false)
+  const [selectedCaptions, setSelectedCaptions] = useState<{[key: number]: string}>({})
   
   // Form state
   const [images, setImages] = useState<File[]>([])
@@ -138,8 +140,8 @@ export default function SimpleUploadPage() {
     }
   }
 
-  // Handle form submission
-  async function handleSubmit(e: React.FormEvent) {
+  // Handle form submission - Step 1: Generate captions
+  async function handleGenerateCaptions(e: React.FormEvent) {
     e.preventDefault()
     
     if (images.length === 0) {
@@ -152,33 +154,33 @@ export default function SimpleUploadPage() {
       return
     }
     
+    setGeneratingCaptions(true)
+    setError(null)
+    
+    // Generate captions using MCP
+    const mcpResult = await analyzeImagesWithMCP()
+    
+    if (mcpResult && mcpResult.captions.length > 0) {
+      setShowCaptionPicker(true)
+    } else {
+      // Fallback: just submit without caption picker
+      await handleSubmitWithCaptions([])
+    }
+    
+    setGeneratingCaptions(false)
+  }
+  
+  // Handle final submission with selected captions
+  async function handleSubmitWithCaptions(captions: any[]) {
     setUploading(true)
     setError(null)
     
-    // MCP Analysis: Silent processing (no UI feedback)
-    // IMPORTANT: We need to capture the captions directly, not from state
-    // because React state updates are async and won't be ready by the time we submit
-    let localCaptions = generatedCaptions
-    let localTemplateMatch = templateMatch
-    
-    if (images.length > 0 && !templateMatch) {
-      const mcpResult = await analyzeImagesWithMCP()
-      if (mcpResult) {
-        localCaptions = mcpResult.captions
-        localTemplateMatch = mcpResult.templateMatch
-      }
-    }
-    
     try {
       console.log('🚀 FRONTEND: Starting image upload...')
-      console.log('🚀 FRONTEND: Images count:', images.length)
-      console.log('🚀 FRONTEND: Brief text:', brief)
-      console.log('🚀 FRONTEND: Token:', token)
       
       // Upload images to storage
       const uploadedImages = await Promise.all(
         images.map(async (file) => {
-          console.log('🚀 FRONTEND: Uploading file:', file.name)
           const formData = new FormData()
           formData.append('file', file)
           formData.append('submissionToken', token)
@@ -188,31 +190,16 @@ export default function SimpleUploadPage() {
             body: formData,
           })
           
-          console.log('🚀 FRONTEND: Upload response:', response.status)
-          
           if (!response.ok) {
             throw new Error(`Failed to upload ${file.name}`)
           }
           
           const imageData = await response.json()
-          console.log('🚀 FRONTEND: Uploaded image data:', imageData)
           return imageData
         })
       )
       
-      console.log('🚀 FRONTEND: All images uploaded:', uploadedImages.length)
-      console.log('🚀 FRONTEND: Uploaded images:', JSON.stringify(uploadedImages, null, 2))
-      console.log('🚀 FRONTEND: Calling submit API...')
-      console.log('🚀 FRONTEND: Request payload:', JSON.stringify({
-        uploadType: 'images',
-        platforms: ['instagram'],
-        briefText: brief?.substring(0, 50),
-        imagesCount: uploadedImages.length,
-        imageUrls: uploadedImages.map((img: any) => img.url?.substring(0, 80)),
-        hasCaptions: !!localCaptions?.length,
-      }, null, 2))
-      
-      // Create/update submission with pre-generated captions
+      // Create submission with captions
       const submitResponse = await fetch(`/api/submissions/upload/${token}/submit`, {
         method: 'POST',
         headers: {
@@ -224,23 +211,16 @@ export default function SimpleUploadPage() {
           briefText: brief,
           hasVoiceNote: false,
           images: uploadedImages,
-          templateMatch: localTemplateMatch,
-          generatedCaptions: localCaptions.length > 0 ? localCaptions : null,
+          templateMatch: templateMatch,
+          generatedCaptions: captions.length > 0 ? captions : null,
         }),
       })
       
-      console.log('🚀 FRONTEND: Submit response status:', submitResponse.status)
-      console.log('🚀 FRONTEND: Submit response headers:', Object.fromEntries(submitResponse.headers.entries()))
-      
       if (!submitResponse.ok) {
         const errorData = await submitResponse.json()
-        console.error('🚀 FRONTEND: Submit error:', errorData)
         throw new Error(errorData.error || 'Submission failed')
       }
       
-      const submitData = await submitResponse.json()
-      console.log('🚀 FRONTEND: Submit success:', submitData)
-      console.log('🚀 FRONTEND: Setting uploaded=true')
       setUploaded(true)
       
     } catch (err: any) {
