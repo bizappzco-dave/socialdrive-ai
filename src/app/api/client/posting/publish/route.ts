@@ -110,8 +110,14 @@ export async function POST(request: Request) {
         if (safeImageUrls.length > 0 && safeImageUrls[0]?.includes('supabase.co/storage')) {
           // Convert storage URLs to signed URLs
           console.log(`[Upload-Post] Generating signed URLs for ${safeImageUrls.length} images...`)
+          
+          // Extract bucket name from URL: /storage/v1/object/public/{bucket}/{path}
+          const bucketMatch = safeImageUrls[0].match(/\/storage\/v1\/object\/(?:public|private)\/([^/]+)\//)
+          const bucketName = bucketMatch ? bucketMatch[1] : 'submissions'
+          console.log(`[Upload-Post] Detected bucket: ${bucketName}`)
+          
           const { data: urlData, error: urlError } = await supabase.storage
-            .from('submissions')
+            .from(bucketName)
             .createSignedUrls(safeImageUrls, 3600) // 1 hour expiry
           
           if (urlError) {
@@ -121,6 +127,7 @@ export async function POST(request: Request) {
           if (urlData && Array.isArray(urlData)) {
             publicImageUrls = urlData.map((u: any) => u.signedUrl).filter(Boolean)
             console.log(`[Upload-Post] Generated ${publicImageUrls.length} signed URLs`)
+            console.log(`[Upload-Post] First signed URL:`, publicImageUrls[0]?.slice(0, 100))
           }
         }
         
