@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createClient } from '@/lib/supabase/client'
 
 export default function UploadPage() {
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
   const [activeSection, setActiveSection] = useState<'content' | 'platforms' | 'schedule'>('content')
   
   // Form state
