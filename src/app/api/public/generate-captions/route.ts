@@ -6,25 +6,32 @@ export const dynamic = 'force-dynamic'
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { images, variations_per_image = 3 } = body
+    const { message, image_count = 1, variations_per_image = 3 } = body
 
-    if (!images || !Array.isArray(images)) {
-      return NextResponse.json({ error: 'images array is required' }, { status: 400 })
+    if (!message || !message.trim()) {
+      return NextResponse.json({ error: 'message is required' }, { status: 400 })
     }
 
-    // Generate 3 caption variations per image using AI
-    // For now, using simple templates - can replace with actual AI later
-    const generateVariations = (message: string): string[] => {
-      const templates = [
-        `🌟 ${message} #trending #viral`,
-        `✨ ${message} #lifestyle #inspiration`,
-        `🔥 ${message} #motivation #goals`,
+    // Generate variations based on the single message
+    // Each image gets slightly different variations
+    const generateVariations = (baseMessage: string, imgIdx: number): string[] => {
+      const emojis = ['🌟', '✨', '🔥', '💫', '🎯', '📸']
+      const hashtags = [
+        '#trending #viral #explore',
+        '#lifestyle #inspiration #motivation',
+        '#goals #success #hustle',
       ]
-      return templates
+      
+      // Generate 3 variations with different emoji/hashtag combos
+      return [
+        `${emojis[imgIdx % emojis.length]} ${baseMessage} ${hashtags[0]}`,
+        `${emojis[(imgIdx + 1) % emojis.length]} ${baseMessage} ${hashtags[1]}`,
+        `${emojis[(imgIdx + 2) % emojis.length]} ${baseMessage} ${hashtags[2]}`,
+      ]
     }
 
-    const allVariations = images.map((img: any) => 
-      generateVariations(img.message || 'Check this out!')
+    const allVariations = Array.from({ length: image_count }, (_, idx) => 
+      generateVariations(message, idx)
     )
 
     return NextResponse.json({
