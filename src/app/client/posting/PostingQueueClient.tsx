@@ -18,6 +18,16 @@ export default function PostingQueueClient({ items }: { items: PostItem[] }) {
   const [message, setMessage] = useState<string>('')
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [scheduleType, setScheduleType] = useState<'mwf' | 'daily'>('mwf')
+  const [platformFilter, setPlatformFilter] = useState<string>('all')
+  const [expandedPostId, setExpandedPostId] = useState<string | null>(null)
+  
+  // Filter items by platform
+  const filteredItems = items.filter(item => 
+    platformFilter === 'all' ? true : item.platform === platformFilter
+  )
+  
+  // Get unique platforms for filter dropdown
+  const platforms = ['all', ...Array.from(new Set(items.map(item => item.platform)))]
 
   async function publishNow(postId: string) {
     setBusyId(postId)
@@ -144,6 +154,31 @@ export default function PostingQueueClient({ items }: { items: PostItem[] }) {
         </div>
       )}
 
+      {/* Filters */}
+      {items.length > 0 && (
+        <div className="rounded-lg bg-white p-4 shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <label className="text-sm font-medium text-gray-700">Filter by platform:</label>
+              <select
+                value={platformFilter}
+                onChange={(e) => setPlatformFilter(e.target.value)}
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {platforms.map(platform => (
+                  <option key={platform} value={platform}>
+                    {platform === 'all' ? 'All Platforms' : platform.charAt(0).toUpperCase() + platform.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <p className="text-sm text-gray-600">
+              Showing {filteredItems.length} of {items.length} posts
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Schedule Modal */}
       {showScheduleModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -210,18 +245,33 @@ export default function PostingQueueClient({ items }: { items: PostItem[] }) {
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Post ID</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-600">Image</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">Platform</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">Status</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Caption Preview</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-600">Caption</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">Created</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {items.map((item) => (
-                <tr key={item.id}>
-                  <td className="px-4 py-3 font-mono text-xs">{item.id.slice(0, 8)}...</td>
+              {filteredItems.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50">
+                  {/* Image Thumbnail */}
+                  <td className="px-4 py-3">
+                    {item.image_urls && item.image_urls.length > 0 ? (
+                      <img
+                        src={item.image_urls[0]}
+                        alt="Post thumbnail"
+                        className="h-16 w-16 object-cover rounded-lg border border-gray-200"
+                      />
+                    ) : (
+                      <div className="h-16 w-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-3 capitalize">{item.platform}</td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex rounded-full px-2 py-0.5 text-xs ${
@@ -233,17 +283,50 @@ export default function PostingQueueClient({ items }: { items: PostItem[] }) {
                       {item.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 max-w-xs truncate text-xs text-gray-600">
-                    {item.caption?.slice(0, 80) || 'No caption'}
+                  <td className="px-4 py-3 max-w-md">
+                    <div className="space-y-2">
+                      <p className="text-xs text-gray-600 line-clamp-2">
+                        {item.caption?.slice(0, 150) || 'No caption'}
+                        {item.caption && item.caption.length > 150 && '...'}
+                      </p>
+                      {item.hashtags && item.hashtags.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {item.hashtags.slice(0, 3).map((tag: string, i: number) => (
+                            <span key={i} className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded">
+                              {tag}
+                            </span>
+                          ))}
+                          {item.hashtags.length > 3 && (
+                            <span className="text-xs text-gray-400">+{item.hashtags.length - 3}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </td>
-                  <td className="px-4 py-3">{new Date(item.created_at).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-xs text-gray-600">
+                    {new Date(item.created_at).toLocaleDateString()}
+                    <br />
+                    <span className="text-gray-400">{new Date(item.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                  </td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => publishNow(item.id)}
                       disabled={busyId === item.id || item.status === 'published'}
-                      className="rounded bg-blue-600 px-3 py-1.5 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                      className="rounded bg-blue-600 px-3 py-1.5 font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                     >
-                      {busyId === item.id ? 'Creating...' : item.status === 'published' ? 'Published' : 'Post now'}
+                      {busyId === item.id ? (
+                        <span className="flex items-center gap-1">
+                          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Posting...
+                        </span>
+                      ) : item.status === 'published' ? (
+                        'Published'
+                      ) : (
+                        'Post now'
+                      )}
                     </button>
                   </td>
                 </tr>

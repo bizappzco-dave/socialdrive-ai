@@ -420,9 +420,27 @@ export default function SimpleUploadPage() {
           <p className="text-gray-600 mb-4">
             We're creating your social media posts now. You'll get a WhatsApp message with your review link in about 1-2 minutes.
           </p>
-          <div className="bg-blue-50 rounded-xl p-4">
+          <div className="bg-blue-50 rounded-xl p-4 mb-6">
             <p className="text-sm text-blue-800">
               ✨ That's it! We'll handle the rest.
+            </p>
+          </div>
+          
+          {/* View Your Posts Link */}
+          <div className="border-t border-gray-200 pt-6">
+            <p className="text-sm text-gray-600 mb-3">Want to see your posts?</p>
+            <a
+              href="/client/posting"
+              className="inline-flex items-center gap-2 bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold py-3 px-6 rounded-xl transition-all"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              View Your Posts
+            </a>
+            <p className="text-xs text-gray-500 mt-2">
+              Preview, edit captions, and publish when ready
             </p>
           </div>
         </div>
