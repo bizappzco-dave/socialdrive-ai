@@ -111,14 +111,22 @@ export async function POST(request: Request) {
           // Convert storage URLs to signed URLs
           console.log(`[Upload-Post] Generating signed URLs for ${safeImageUrls.length} images...`)
           
-          // Extract bucket name from URL: /storage/v1/object/public/{bucket}/{path}
+          // Extract bucket name and paths from URLs
+          // URL format: https://{project}.supabase.co/storage/v1/object/{public|private}/{bucket}/{path}
           const bucketMatch = safeImageUrls[0].match(/\/storage\/v1\/object\/(?:public|private)\/([^/]+)\//)
           const bucketName = bucketMatch ? bucketMatch[1] : 'submissions'
           console.log(`[Upload-Post] Detected bucket: ${bucketName}`)
           
+          // Extract relative paths (everything after bucket name)
+          const relativePaths = safeImageUrls.map((url: string) => {
+            const pathMatch = url.match(/\/storage\/v1\/object\/(?:public|private)\/[^/]+\/(.+)$/)
+            return pathMatch ? pathMatch[1] : url
+          })
+          console.log(`[Upload-Post] Relative paths:`, relativePaths)
+          
           const { data: urlData, error: urlError } = await supabase.storage
             .from(bucketName)
-            .createSignedUrls(safeImageUrls, 3600) // 1 hour expiry
+            .createSignedUrls(relativePaths, 3600) // 1 hour expiry
           
           if (urlError) {
             console.error('[Upload-Post] Signed URL error:', urlError)
@@ -127,7 +135,9 @@ export async function POST(request: Request) {
           if (urlData && Array.isArray(urlData)) {
             publicImageUrls = urlData.map((u: any) => u.signedUrl).filter(Boolean)
             console.log(`[Upload-Post] Generated ${publicImageUrls.length} signed URLs`)
-            console.log(`[Upload-Post] First signed URL:`, publicImageUrls[0]?.slice(0, 100))
+            if (publicImageUrls.length > 0) {
+              console.log(`[Upload-Post] First signed URL:`, publicImageUrls[0]?.slice(0, 100))
+            }
           }
         }
         
