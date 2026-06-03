@@ -26,6 +26,7 @@ export default function SimpleUploadPage() {
   const [templateMatch, setTemplateMatch] = useState<any>(null)
   const [generatedCaptions, setGeneratedCaptions] = useState<any[]>([])
   const [mcpError, setMcPError] = useState<string | null>(null)
+  const [analyzed, setAnalyzed] = useState(false)
   
   // Form state
   const [images, setImages] = useState<File[]>([])
@@ -69,6 +70,21 @@ export default function SimpleUploadPage() {
     // Create previews using blob URLs (much faster than base64 for large files)
     const newPreviews = newFiles.map(file => URL.createObjectURL(file))
     setImagePreviews(prev => [...prev, ...newPreviews])
+    
+    // Trigger MCP analysis when images are added (only once, on first upload)
+    if (images.length === 0 && newFiles.length > 0 && !analyzed) {
+      setAnalyzed(true)
+      analyzeImagesWithMCP().then(result => {
+        if (result) {
+          setTemplateMatch(result.templateMatch)
+          setGeneratedCaptions(result.captions)
+          console.log('[MCP] Analysis complete:', result.captions.length, 'captions generated')
+        }
+      }).catch(err => {
+        console.error('[MCP] Analysis failed:', err)
+        // Silently continue - server will handle fallback
+      })
+    }
   }
 
   // Handle drag & drop
