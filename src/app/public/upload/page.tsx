@@ -184,7 +184,7 @@ export default function UploadPage() {
   }
 
   // Step 2: Add messages & generate captions
-  if (step === 'captions') {
+  if (step === 'captions' && images.every(img => img.captionVariations.length === 0)) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 py-8 px-4">
         <div className="max-w-4xl mx-auto">
@@ -247,7 +247,7 @@ export default function UploadPage() {
     )
   }
 
-  // Step 3: Pick favorite captions
+  // Step 3: Pick favorite captions (after generation)
   if (step === 'captions' && images.some(img => img.captionVariations.length > 0)) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 py-8 px-4">
