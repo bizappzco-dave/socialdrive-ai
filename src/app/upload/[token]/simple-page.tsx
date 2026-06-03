@@ -26,8 +26,6 @@ export default function SimpleUploadPage() {
   const [templateMatch, setTemplateMatch] = useState<any>(null)
   const [generatedCaptions, setGeneratedCaptions] = useState<any[]>([])
   const [mcpError, setMcPError] = useState<string | null>(null)
-  const [showCaptionPicker, setShowCaptionPicker] = useState(false)
-  const [selectedCaptions, setSelectedCaptions] = useState<{[key: number]: string}>({})
   
   // Form state
   const [images, setImages] = useState<File[]>([])
@@ -140,8 +138,8 @@ export default function SimpleUploadPage() {
     }
   }
 
-  // Handle form submission - Step 1: Generate captions
-  async function handleGenerateCaptions(e: React.FormEvent) {
+  // Handle form submission
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     
     if (images.length === 0) {
@@ -154,30 +152,10 @@ export default function SimpleUploadPage() {
       return
     }
     
-    setGeneratingCaptions(true)
-    setError(null)
-    
-    // Generate captions using MCP
-    const mcpResult = await analyzeImagesWithMCP()
-    
-    if (mcpResult && mcpResult.captions.length > 0) {
-      setShowCaptionPicker(true)
-    } else {
-      // Fallback: just submit without caption picker
-      await handleSubmitWithCaptions([])
-    }
-    
-    setGeneratingCaptions(false)
-  }
-  
-  // Handle final submission with selected captions
-  async function handleSubmitWithCaptions(captions: any[]) {
     setUploading(true)
     setError(null)
     
     try {
-      console.log('🚀 FRONTEND: Starting image upload...')
-      
       // Upload images to storage
       const uploadedImages = await Promise.all(
         images.map(async (file) => {
@@ -199,7 +177,7 @@ export default function SimpleUploadPage() {
         })
       )
       
-      // Create submission with captions
+      // Create submission
       const submitResponse = await fetch(`/api/submissions/upload/${token}/submit`, {
         method: 'POST',
         headers: {
@@ -212,7 +190,7 @@ export default function SimpleUploadPage() {
           hasVoiceNote: false,
           images: uploadedImages,
           templateMatch: templateMatch,
-          generatedCaptions: captions.length > 0 ? captions : null,
+          generatedCaptions: generatedCaptions.length > 0 ? generatedCaptions : null,
         }),
       })
       
@@ -304,7 +282,7 @@ export default function SimpleUploadPage() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleGenerateCaptions} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Brief - First Box */}
           <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-8">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
