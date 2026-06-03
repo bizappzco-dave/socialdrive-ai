@@ -495,16 +495,12 @@ export async function generatePostVariationsHybrid(params: {
   const apiKey = process.env.ANTHROPIC_API_KEY
   const claudeEnabled = apiKey && !apiKey.includes('CHANGEME') && apiKey.length > 20
   
-  // Check if Fireworks is available (Mistral)
-  const fireworksKey = process.env.FIREWORKS_API_KEY
-  const fireworksEnabled = fireworksKey && !fireworksKey.includes('CHANGEME') && fireworksKey.length > 20
-  
-  // Priority: Claude (premium) → Fireworks Mistral (standard) → Ollama (fallback)
+  // Priority: Claude (premium) → Ollama (standard)
+  // Fireworks/Kimi removed - using local Ollama with MCP instead
   const useClaude = params.clientTier === 'premium' && claudeEnabled
-  const useFireworks = !useClaude && fireworksEnabled
   
-  console.log(`Hybrid routing: clientTier=${params.clientTier}, claudeEnabled=${claudeEnabled}, fireworksEnabled=${fireworksEnabled}`)
-  console.log(`Using: ${useClaude ? 'Claude' : useFireworks ? 'Fireworks Mistral' : 'Ollama'}`)
+  console.log(`Hybrid routing: clientTier=${params.clientTier}, claudeEnabled=${claudeEnabled}`)
+  console.log(`Using: ${useClaude ? 'Claude API (premium)' : 'Ollama (standard)'}`)
   
   // Generate all variations with appropriate AI
   for (let i = 0; i < count; i++) {
@@ -516,15 +512,8 @@ export async function generatePostVariationsHybrid(params: {
         })
         variations.push(result)
         console.log('✓ Claude variation', i + 1, 'generated')
-      } else if (useFireworks) {
-        const result = await generateWithLlamaVision({
-          ...params,
-          model: 'accounts/fireworks/models/kimi-k2-6',
-        })
-        variations.push(result)
-        console.log('✓ Fireworks Kimi K2.6 variation', i + 1, 'generated')
       } else {
-        // Fall back to Ollama for standard tier or when Claude credits exhausted
+        // Use Ollama for standard tier (free, unlimited, local)
         const result = await generateWithOllamaWrapper(params)
         variations.push(result)
         console.log('✓ Ollama variation', i + 1, 'generated')
