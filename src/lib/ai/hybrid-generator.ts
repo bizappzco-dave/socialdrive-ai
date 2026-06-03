@@ -211,13 +211,18 @@ async function generateWithLlamaVision(params: {
   
   console.log('Mistral API: Starting generation', retryCount > 0 ? `(retry ${retryCount})` : '')
   
-  // Use the image URL directly (Fireworks accepts http/https URLs)
-  // No need to convert to base64
+  // Fetch image and convert to base64 (this was working before)
+  const imageResponse = await fetch(params.imageUrl)
+  const imageBuffer = await imageResponse.arrayBuffer()
+  
+  // Convert to base64 (Node.js only - this runs server-side)
+  const base64Image = Buffer.from(imageBuffer).toString('base64')
+  const contentType = imageResponse.headers.get('content-type') || 'image/jpeg'
   
   // Build the prompt - add stricter instructions on retry
   let prompt = buildClaudePrompt(brandContext, briefText)
   if (retryCount > 0) {
-    prompt += '\\n\\n**CRITICAL RETRY NOTICE:** Your previous response was rejected. You MUST output ONLY the 2 lines below, nothing else.'
+    prompt += '\n\n**CRITICAL RETRY NOTICE:** Your previous response was rejected. You MUST output ONLY the 2 lines below, nothing else.'
   }
   
   try {
@@ -228,7 +233,7 @@ async function generateWithLlamaVision(params: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'accounts/fireworks/models/kimi-k2p6',
+        model: 'accounts/fireworks/models/kimi-k2-6',  // Fixed model name (was kimi-k2p6)
         max_tokens: 500,
         messages: [{
           role: 'user',
@@ -236,7 +241,7 @@ async function generateWithLlamaVision(params: {
             {
               type: 'image_url',
               image_url: {
-                url: params.imageUrl,  // Use Supabase URL directly
+                url: `data:${contentType};base64,${base64Image}`,
               },
             },
             {
