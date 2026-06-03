@@ -23,7 +23,20 @@ export async function GET(
       throw error
     }
     
-    return NextResponse.json(posts || [])
+    // Map TaskifiAI schema to frontend expected format
+    const mappedPosts = (posts || []).map(post => ({
+      id: post.id,
+      caption_text: post.caption,
+      image_url: Array.isArray(post.image_urls) ? post.image_urls[0] : post.image_urls,
+      hashtags: post.hashtags,
+      caption_style: 'short_statement',
+      emoji_count: 0,
+      selected: false,
+      platform: post.platform,
+      status: post.status,
+    }))
+    
+    return NextResponse.json(mappedPosts)
     
   } catch (error: any) {
     console.error('Failed to fetch posts:', error)
