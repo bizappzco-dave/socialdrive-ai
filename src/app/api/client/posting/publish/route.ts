@@ -48,6 +48,10 @@ export async function POST(request: Request) {
 
     const filteredPosts = (posts || []).filter((p: any) => p && p.id)
 
+    console.log('[Publish API] Loaded posts:', posts?.length)
+    console.log('[Publish API] Filtered posts:', filteredPosts?.length)
+    console.log('[Publish API] First post data:', filteredPosts[0])
+
     if (filteredPosts.length === 0) {
       return NextResponse.json({ error: 'No eligible posts found to publish' }, { status: 400 })
     }
