@@ -58,11 +58,13 @@ export default function SimpleUploadPage() {
   }
 
   // Handle file selection
-  function handleFileSelect(files: FileList | null) {
+  async function handleFileSelect(files: FileList | null) {
     if (!files) return
     
-    // Validate files before adding
-    const MAX_SIZE = 10 * 1024 * 1024 // 10MB per image
+    // Optimize images before adding
+    const MAX_SIZE = 10 * 1024 * 1024 // 10MB original limit
+    const MAX_DIMENSION = 2048 // Max width/height for optimization
+    const JPEG_QUALITY = 0.85 // 85% quality for compression
     const validFiles: File[] = []
     const rejectedFiles: {name: string, reason: string}[] = []
     
@@ -73,22 +75,29 @@ export default function SimpleUploadPage() {
         continue
       }
       
-      // Check file size
-      if (file.size > MAX_SIZE) {
-        rejectedFiles.push({ 
-          name: file.name, 
-          reason: `File too large (${(file.size / 1024 / 1024).toFixed(1)}MB, max 10MB)` 
-        })
-        continue
-      }
-      
       // Check if already added
       if (images.find(img => img.name === file.name)) {
         rejectedFiles.push({ name: file.name, reason: 'Already added' })
         continue
       }
       
-      validFiles.push(file)
+      // Optimize image if needed
+      try {
+        const optimizedFile = await optimizeImage(file, MAX_DIMENSION, JPEG_QUALITY)
+        
+        // Check optimized size
+        if (optimizedFile.size > MAX_SIZE) {
+          rejectedFiles.push({ 
+            name: file.name, 
+            reason: `File still too large after optimization (${(optimizedFile.size / 1024 / 1024).toFixed(1)}MB, max 10MB)` 
+          })
+          continue
+        }
+        
+        validFiles.push(optimizedFile)
+      } catch (err: any) {
+        rejectedFiles.push({ name: file.name, reason: `Failed to process: ${err.message}` })
+      }
     }
     
     // Show warnings for rejected files
@@ -120,6 +129,76 @@ export default function SimpleUploadPage() {
         // Silently continue - server will handle fallback
       })
     }
+  }
+  
+  // Optimize image: resize and compress
+  async function optimizeImage(file: File, maxDimension: number, quality: number): Promise<File> {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      const url = URL.createObjectURL(file)
+      
+      img.onload = () => {
+        URL.revokeObjectURL(url)
+        
+        // Calculate new dimensions (maintain aspect ratio)
+        let width = img.width
+        let height = img.height
+        
+        if (width > height && width > maxDimension) {
+          height = Math.round(height * (maxDimension / width))
+          width = maxDimension
+        } else if (height > maxDimension) {
+          width = Math.round(width * (maxDimension / height))
+          height = maxDimension
+        }
+        
+        // Create canvas and resize
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        
+        if (!ctx) {
+          reject(new Error('Canvas not supported'))
+          return
+        }
+        
+        ctx.drawImage(img, 0, 0, width, height)
+        
+        // Compress and convert to blob
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Failed to compress image'))
+              return
+            }
+            
+            // Create new file with optimized content
+            const ext = file.name.split('.').pop() || 'jpg'
+            const optimizedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            })
+            
+            const originalSize = (file.size / 1024 / 1024).toFixed(1)
+            const newSize = (optimizedFile.size / 1024 / 1024).toFixed(1)
+            const reduction = ((1 - optimizedFile.size / file.size) * 100).toFixed(1)
+            
+            console.log(`📸 Optimized ${file.name}: ${originalSize}MB → ${newSize}MB (${reduction}% smaller, ${width}x${height})`)
+            resolve(optimizedFile)
+          },
+          'image/jpeg',
+          quality
+        )
+      }
+      
+      img.onerror = () => {
+        URL.revokeObjectURL(url)
+        reject(new Error('Failed to load image'))
+      }
+      
+      img.src = url
+    })
   }
 
   // Handle drag & drop
