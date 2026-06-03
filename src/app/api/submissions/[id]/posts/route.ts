@@ -15,7 +15,7 @@ export async function GET(
     
     const { data: posts, error } = await supabase
       .from('posts')
-      .select('id, caption_text, image_url, hashtags, caption_style, emoji_count, selected')
+      .select('id, caption, image_urls, hashtags, platform, status')
       .eq('submission_id', params.id)
       .order('created_at', { ascending: true })
     
