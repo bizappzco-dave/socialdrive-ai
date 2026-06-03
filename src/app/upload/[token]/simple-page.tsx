@@ -156,7 +156,9 @@ export default function SimpleUploadPage() {
     setError(null)
     
     try {
-      // Upload images to storage
+      // Step 1: Upload images to storage
+      console.log('[Upload] Starting upload of', images.length, 'images')
+      
       const uploadedImages = await Promise.all(
         images.map(async (file) => {
           const formData = new FormData()
@@ -169,15 +171,20 @@ export default function SimpleUploadPage() {
           })
           
           if (!response.ok) {
-            throw new Error(`Failed to upload ${file.name}`)
+            const errorText = await response.text()
+            console.error('[Upload] Failed:', response.status, errorText)
+            throw new Error(`Failed to upload ${file.name}: ${errorText}`)
           }
           
           const imageData = await response.json()
+          console.log('[Upload] Uploaded:', imageData)
           return imageData
         })
       )
       
-      // Create submission
+      console.log('[Upload] All images uploaded, creating submission...')
+      
+      // Step 2: Create submission
       const submitResponse = await fetch(`/api/submissions/upload/${token}/submit`, {
         method: 'POST',
         headers: {
@@ -196,15 +203,16 @@ export default function SimpleUploadPage() {
       
       if (!submitResponse.ok) {
         const errorData = await submitResponse.json()
+        console.error('[Submit] Failed:', submitResponse.status, errorData)
         throw new Error(errorData.error || 'Submission failed')
       }
       
+      console.log('[Submit] Success!')
       setUploaded(true)
       
     } catch (err: any) {
       console.error('Upload failed:', err)
-      setError(err.message)
-    } finally {
+      setError(err.message || 'Upload failed. Please try again.')
       setUploading(false)
     }
   }
