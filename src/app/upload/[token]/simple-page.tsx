@@ -61,18 +61,53 @@ export default function SimpleUploadPage() {
   function handleFileSelect(files: FileList | null) {
     if (!files) return
     
-    const newFiles = Array.from(files).filter(file => 
-      file.type.startsWith('image/') && !images.find(img => img.name === file.name)
-    )
+    // Validate files before adding
+    const MAX_SIZE = 10 * 1024 * 1024 // 10MB per image
+    const validFiles: File[] = []
+    const rejectedFiles: {name: string, reason: string}[] = []
     
-    setImages(prev => [...prev, ...newFiles])
+    for (const file of Array.from(files)) {
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        rejectedFiles.push({ name: file.name, reason: 'Not an image file' })
+        continue
+      }
+      
+      // Check file size
+      if (file.size > MAX_SIZE) {
+        rejectedFiles.push({ 
+          name: file.name, 
+          reason: `File too large (${(file.size / 1024 / 1024).toFixed(1)}MB, max 10MB)` 
+        })
+        continue
+      }
+      
+      // Check if already added
+      if (images.find(img => img.name === file.name)) {
+        rejectedFiles.push({ name: file.name, reason: 'Already added' })
+        continue
+      }
+      
+      validFiles.push(file)
+    }
+    
+    // Show warnings for rejected files
+    if (rejectedFiles.length > 0) {
+      const messages = rejectedFiles.map(r => `${r.name}: ${r.reason}`).join('\n')
+      console.warn('⚠️ Rejected files:', messages)
+      setError(`Some files were rejected:\n${messages}`)
+    }
+    
+    if (validFiles.length === 0) return
+    
+    setImages(prev => [...prev, ...validFiles])
     
     // Create previews using blob URLs (much faster than base64 for large files)
-    const newPreviews = newFiles.map(file => URL.createObjectURL(file))
+    const newPreviews = validFiles.map(file => URL.createObjectURL(file))
     setImagePreviews(prev => [...prev, ...newPreviews])
     
     // Trigger MCP analysis when images are added (only once, on first upload)
-    if (images.length === 0 && newFiles.length > 0 && !analyzed) {
+    if (images.length === 0 && validFiles.length > 0 && !analyzed) {
       setAnalyzed(true)
       analyzeImagesWithMCP().then(result => {
         if (result) {
