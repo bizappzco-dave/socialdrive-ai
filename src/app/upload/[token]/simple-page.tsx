@@ -115,20 +115,8 @@ export default function SimpleUploadPage() {
     const newPreviews = validFiles.map(file => URL.createObjectURL(file))
     setImagePreviews(prev => [...prev, ...newPreviews])
     
-    // Trigger MCP analysis when images are added (only once, on first upload)
-    if (images.length === 0 && validFiles.length > 0 && !analyzed) {
-      setAnalyzed(true)
-      analyzeImagesWithMCP().then(result => {
-        if (result) {
-          setTemplateMatch(result.templateMatch)
-          setGeneratedCaptions(result.captions)
-          console.log('[MCP] Analysis complete:', result.captions.length, 'captions generated')
-        }
-      }).catch(err => {
-        console.error('[MCP] Analysis failed:', err)
-        // Silently continue - server will handle fallback
-      })
-    }
+    // Note: MCP analysis runs when user clicks "Process My Posts"
+    // This gives them time to do branding edits first if needed
   }
   
   // Optimize image: resize and compress
@@ -310,6 +298,22 @@ export default function SimpleUploadPage() {
     setError(null)
     
     try {
+      // Step 0: Run MCP analysis if not done yet (generate captions with barber hashtags)
+      let finalCaptions = generatedCaptions
+      let finalTemplateMatch = templateMatch
+      
+      if (finalCaptions.length === 0 && images.length > 0) {
+        console.log('[MCP] No pre-generated captions, running analysis now...')
+        const mcpResult = await analyzeImagesWithMCP()
+        if (mcpResult) {
+          finalCaptions = mcpResult.captions
+          finalTemplateMatch = mcpResult.templateMatch
+          console.log('[MCP] ✅ Generated', finalCaptions.length, 'captions')
+        } else {
+          console.log('[MCP] ⚠️ Analysis failed, will use server-side generation')
+        }
+      }
+      
       // Step 1: Upload images to storage
       console.log('[Upload] Starting upload of', images.length, 'images')
       
@@ -350,8 +354,8 @@ export default function SimpleUploadPage() {
           briefText: brief,
           hasVoiceNote: false,
           images: uploadedImages,
-          templateMatch: templateMatch,
-          generatedCaptions: generatedCaptions.length > 0 ? generatedCaptions : null,
+          templateMatch: finalTemplateMatch,
+          generatedCaptions: finalCaptions.length > 0 ? finalCaptions : null,
         }),
       })
       
