@@ -304,7 +304,7 @@ export default function SimpleUploadPage() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleGenerateCaptions} className="space-y-6">
           {/* Brief - First Box */}
           <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-8">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
