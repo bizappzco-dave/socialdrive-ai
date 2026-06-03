@@ -211,18 +211,13 @@ async function generateWithLlamaVision(params: {
   
   console.log('Mistral API: Starting generation', retryCount > 0 ? `(retry ${retryCount})` : '')
   
-  // Fetch image
-  const imageResponse = await fetch(params.imageUrl)
-  const imageBuffer = await imageResponse.arrayBuffer()
-  
-  // Convert to base64 (Node.js only - this runs server-side)
-  const base64Image = Buffer.from(imageBuffer).toString('base64')
-  const contentType = imageResponse.headers.get('content-type') || 'image/jpeg'
+  // Use the image URL directly (Fireworks accepts http/https URLs)
+  // No need to convert to base64
   
   // Build the prompt - add stricter instructions on retry
   let prompt = buildClaudePrompt(brandContext, briefText)
   if (retryCount > 0) {
-    prompt += '\n\n**CRITICAL RETRY NOTICE:** Your previous response was rejected. You MUST output ONLY the 2 lines below, nothing else.'
+    prompt += '\\n\\n**CRITICAL RETRY NOTICE:** Your previous response was rejected. You MUST output ONLY the 2 lines below, nothing else.'
   }
   
   try {
@@ -241,7 +236,7 @@ async function generateWithLlamaVision(params: {
             {
               type: 'image_url',
               image_url: {
-                url: `data:${contentType};base64,${base64Image}`,
+                url: params.imageUrl,  // Use Supabase URL directly
               },
             },
             {
