@@ -276,8 +276,8 @@ export default function UploadPage() {
           briefText: brief,
           hasVoiceNote: !!voiceNote,
           images: uploadedImages,
-          templateMatch: templateMatch,  // Include template analysis
-          generatedCaptions: generatedCaptions.length > 0 ? generatedCaptions : null,  // Include client-generated captions
+          templateMatch: templateMatch,
+          generatedCaptions: generatedCaptions.length > 0 ? generatedCaptions : null,
         }),
       })
       
@@ -287,6 +287,16 @@ export default function UploadPage() {
         throw new Error(errorData.error || 'Submission failed')
       }
       
+      const submitData = await submitResponse.json()
+      
+      // Redirect to review page with the review token
+      if (submitData.reviewToken) {
+        console.log('Redirecting to review page with token:', submitData.reviewToken.substring(0, 8) + '...')
+        window.location.href = `/review/${submitData.reviewToken}`
+        return  // Don't set uploaded state, we're redirecting
+      }
+      
+      // Fallback for legacy submissions without review token
       setUploaded(true)
       
     } catch (err: any) {

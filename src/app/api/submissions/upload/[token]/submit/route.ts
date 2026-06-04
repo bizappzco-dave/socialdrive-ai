@@ -592,6 +592,7 @@ export async function POST(
       success: true,
       postId: allPosts.length,
       message: 'Posts generated successfully',
+      reviewToken: submission.review_token,  // Return review token for redirect
     })
     
   } catch (error: any) {
