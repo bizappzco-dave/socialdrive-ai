@@ -24,35 +24,57 @@ export async function POST(request: Request) {
     }
     
     // Get submission to find client
+    // Check both clients table (permanent tokens) and submissions table (legacy)
     const supabase = createAdminClient()
     
-    console.log('Getting submission for token:', submissionToken)
-    const { data: submission, error: subError } = await supabase
-      .from('submissions')
-      .select('id, client_id, client_name, upload_token')
+    console.log('Getting client for upload token:', submissionToken)
+    
+    // First check clients table (permanent upload tokens)
+    const { data: client, error: clientError } = await supabase
+      .from('clients')
+      .select('id, name')
       .eq('upload_token', submissionToken)
       .limit(1)
       .maybeSingle()
     
-    console.log('Query result:', { submission, subError })
+    console.log('Client query result:', { client, clientError })
     
-    if (subError) {
-      console.error('Failed to get submission:', subError)
-      return NextResponse.json(
-        { error: 'Invalid submission token', details: subError.message },
-        { status: 404 }
-      )
+    let clientId = client?.id
+    let clientName = client?.name
+    
+    // If not found in clients, check submissions table (legacy)
+    if (!client) {
+      console.log('Token not found in clients table, checking submissions...')
+      const { data: submission, error: subError } = await supabase
+        .from('submissions')
+        .select('id, client_id, client_name, upload_token')
+        .eq('upload_token', submissionToken)
+        .limit(1)
+        .maybeSingle()
+      
+      console.log('Submission query result:', { submission, subError })
+      
+      if (subError) {
+        console.error('Failed to get submission:', subError)
+        return NextResponse.json(
+          { error: 'Invalid submission token', details: subError.message },
+          { status: 404 }
+        )
+      }
+      
+      if (!submission) {
+        console.error('No submission found for token:', submissionToken)
+        return NextResponse.json(
+          { error: 'Invalid submission token - not found' },
+          { status: 404 }
+        )
+      }
+      
+      clientId = submission.client_id
+      clientName = submission.client_name
     }
     
-    if (!submission) {
-      console.error('No submission found for token:', submissionToken)
-      return NextResponse.json(
-        { error: 'Invalid submission token - not found' },
-        { status: 404 }
-      )
-    }
-    
-    console.log('Submission found, client_id:', submission.client_id)
+    console.log('Client found, client_id:', clientId)
     
     // Generate unique filename
     const timestamp = Date.now()
