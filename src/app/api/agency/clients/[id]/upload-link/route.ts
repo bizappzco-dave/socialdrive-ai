@@ -17,7 +17,7 @@ export async function POST(
     // Get client info
     const { data: client, error: clientError } = await supabase
       .from('clients')
-      .select('name')
+      .select('name, upload_token, review_token')
       .eq('id', params.id)
       .single()
     
@@ -28,41 +28,29 @@ export async function POST(
       )
     }
     
-    // Check if client already has an upload token
-    const { data: existingSubmission } = await supabase
-      .from('submissions')
-      .select('upload_token, review_token')
-      .eq('client_id', params.id)
-      .is('brief_text', null) // Find placeholder submission
-      .order('created_at', { ascending: true })
-      .single()
-    
     let uploadToken: string
     let reviewToken: string
     
-    if (existingSubmission) {
-      // Reuse existing tokens
-      uploadToken = existingSubmission.upload_token
-      reviewToken = existingSubmission.review_token
+    if (client.upload_token && client.review_token) {
+      // Reuse existing permanent tokens
+      uploadToken = client.upload_token
+      reviewToken = client.review_token
     } else {
-      // Generate new tokens
+      // Generate new permanent tokens
       uploadToken = crypto.randomBytes(16).toString('hex')
       reviewToken = crypto.randomBytes(16).toString('hex')
       
-      // Create placeholder submission
-      const { error } = await supabase
-        .from('submissions')
-        .insert({
-          client_id: params.id,
+      // Store tokens on client record (permanent!)
+      const { error: updateError } = await supabase
+        .from('clients')
+        .update({
           upload_token: uploadToken,
           review_token: reviewToken,
-          client_name: client.name,
-          status: 'pending',
-          // No brief_text = this is a placeholder
         })
+        .eq('id', params.id)
       
-      if (error) {
-        throw error
+      if (updateError) {
+        throw updateError
       }
     }
     
