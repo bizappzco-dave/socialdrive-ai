@@ -99,16 +99,33 @@ export async function POST(
     
     let submission = null
     let subError = null
+    let isNewSubmission = false
     
     if (clientFromToken) {
       console.log('✅ Found permanent token for client:', clientFromToken.name)
-      // Create a temporary submission object for permanent link uploads
-      submission = {
-        id: `client_${clientFromToken.id}`,
-        client_id: clientFromToken.id,
-        client_name: clientFromToken.name,
-        upload_token: params.token,
+      // Create a new submission record for permanent link uploads
+      const newSubmission = await supabase
+        .from('submissions')
+        .insert({
+          client_id: clientFromToken.id,
+          client_name: clientFromToken.name,
+          upload_token: params.token,
+          status: 'draft',
+        })
+        .select()
+        .single()
+      
+      if (newSubmission.error) {
+        console.error('Failed to create submission for permanent link:', newSubmission.error)
+        return NextResponse.json(
+          { error: 'Failed to create submission', details: newSubmission.error.message },
+          { status: 500 }
+        )
       }
+      
+      submission = newSubmission.data
+      isNewSubmission = true
+      console.log('✅ Created new submission record:', submission.id)
     } else {
       // Fall back to submissions table (legacy)
       console.log('Token not in clients table, checking submissions...')
