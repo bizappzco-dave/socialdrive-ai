@@ -110,7 +110,7 @@ export async function POST(
           client_id: clientFromToken.id,
           client_name: clientFromToken.name,
           upload_token: params.token,
-          status: 'draft',
+          status: 'pending',  // Use valid enum value
         })
         .select()
         .single()
