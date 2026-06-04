@@ -1,9 +1,10 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { CheckCircle, Calendar } from 'lucide-react'
 
-export default function ReviewSuccessPage() {
+function SuccessContent() {
   const searchParams = useSearchParams()
   const count = searchParams.get('count') || '0'
 
@@ -56,5 +57,17 @@ export default function ReviewSuccessPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ReviewSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <SuccessContent />
+    </Suspense>
   )
 }
