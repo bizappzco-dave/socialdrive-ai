@@ -103,6 +103,11 @@ export async function POST(
     
     if (clientFromToken) {
       console.log('✅ Found permanent token for client:', clientFromToken.name)
+      // Generate review token for this submission
+      const reviewToken = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('')
+      
       // Create a new submission record for permanent link uploads
       const newSubmission = await supabase
         .from('submissions')
@@ -110,7 +115,8 @@ export async function POST(
           client_id: clientFromToken.id,
           client_name: clientFromToken.name,
           upload_token: params.token,
-          status: 'pending',  // Use valid enum value
+          review_token: reviewToken,
+          status: 'pending',
         })
         .select()
         .single()
@@ -126,6 +132,7 @@ export async function POST(
       submission = newSubmission.data
       isNewSubmission = true
       console.log('✅ Created new submission record:', submission.id)
+      console.log('📋 Review token generated:', reviewToken.substring(0, 8) + '...')
     } else {
       // Fall back to submissions table (legacy)
       console.log('Token not in clients table, checking submissions...')
