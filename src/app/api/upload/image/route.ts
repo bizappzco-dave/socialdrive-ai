@@ -80,7 +80,7 @@ export async function POST(request: Request) {
     const timestamp = Date.now()
     const randomStr = Math.random().toString(36).substring(2, 8)
     const ext = file.name.split('.').pop()
-    const filename = `${submission.client_id}/${timestamp}-${randomStr}.${ext}`
+    const filename = `${clientId}/${timestamp}-${randomStr}.${ext}`
     
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
