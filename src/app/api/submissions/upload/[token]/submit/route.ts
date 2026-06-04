@@ -89,24 +89,24 @@ export async function POST(
     console.log('Looking up token in clients table first...')
     
     // First check clients table for permanent upload token
-    const { data: client, error: clientError } = await supabase
+    const { data: clientFromToken, error: clientFromTokenError } = await supabase
       .from('clients')
       .select('id, name')
       .eq('upload_token', params.token)
       .maybeSingle()
     
-    console.log('Client lookup result:', { hasClient: !!client, error: clientError })
+    console.log('Client lookup result:', { hasClient: !!clientFromToken, error: clientFromTokenError })
     
     let submission = null
     let subError = null
     
-    if (client) {
-      console.log('✅ Found permanent token for client:', client.name)
+    if (clientFromToken) {
+      console.log('✅ Found permanent token for client:', clientFromToken.name)
       // Create a temporary submission object for permanent link uploads
       submission = {
-        id: `client_${client.id}`,
-        client_id: client.id,
-        client_name: client.name,
+        id: `client_${clientFromToken.id}`,
+        client_id: clientFromToken.id,
+        client_name: clientFromToken.name,
         upload_token: params.token,
       }
     } else {
