@@ -33,29 +33,27 @@ export async function GET() {
     
     console.log('Clients loaded:', clients?.length || 0)
     
-    // Get upload tokens for each client
+    // Get upload tokens for each client (now stored on clients table)
     const clientsWithLinks = await Promise.all(
       clients.map(async (client) => {
-        const { data: submission, error: subError } = await supabase
-          .from('submissions')
+        // Get client with permanent tokens
+        const { data: clientWithTokens, error: clientError } = await supabase
+          .from('clients')
           .select('upload_token, review_token')
-          .eq('client_id', client.id)
-          .is('brief_text', null) // Only placeholder submissions
-          .order('created_at', { ascending: false }) // Get the LATEST one
-          .limit(1)
+          .eq('id', client.id)
           .maybeSingle()
         
-        if (subError && subError.code !== 'PGRST116') { // PGRST116 = not found
-          console.error('Error fetching submission for client', client.id, subError)
+        if (clientError) {
+          console.error('Error fetching client tokens for', client.id, clientError)
         }
         
         const baseUrl = 'https://socialdrive-ai.vercel.app'
         
         return {
           ...client,
-          upload_url: submission ? `${baseUrl}/upload/${submission.upload_token}` : undefined,
-          review_url: submission ? `${baseUrl}/review/${submission.review_token}` : undefined,
-          has_submission: !!submission,
+          upload_url: clientWithTokens?.upload_token ? `${baseUrl}/upload/${clientWithTokens.upload_token}` : undefined,
+          review_url: clientWithTokens?.review_token ? `${baseUrl}/review/${clientWithTokens.review_token}` : undefined,
+          has_submission: !!clientWithTokens?.upload_token,
         }
       })
     )
