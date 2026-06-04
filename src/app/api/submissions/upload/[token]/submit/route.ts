@@ -103,6 +103,23 @@ export async function POST(
     
     if (clientFromToken) {
       console.log('✅ Found permanent token for client:', clientFromToken.name)
+      
+      // Check if submission already exists with this upload_token (from previous test)
+      const { data: existingSubmission } = await supabase
+        .from('submissions')
+        .select('id')
+        .eq('upload_token', params.token)
+        .maybeSingle()
+      
+      if (existingSubmission) {
+        console.log('⚠️ Submission already exists, deleting old one:', existingSubmission.id)
+        // Delete old submission (cascade will delete posts and images)
+        await supabase
+          .from('submissions')
+          .delete()
+          .eq('id', existingSubmission.id)
+      }
+      
       // Generate review token for this submission
       const reviewToken = Array.from(crypto.getRandomValues(new Uint8Array(32)))
         .map(b => b.toString(16).padStart(2, '0'))
