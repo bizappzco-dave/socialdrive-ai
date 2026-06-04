@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * GET /api/submissions/upload/[token]
  * 
  * Get submission info by upload token
+ * Checks both clients table (permanent) and submissions table (legacy)
  */
 export async function GET(
   request: Request,
@@ -13,53 +14,69 @@ export async function GET(
   try {
     console.log('=== SUBMISSION LOOKUP DEBUG ===')
     console.log('Token from URL:', params.token)
-    console.log('Token length:', params.token?.length)
-    console.log('Token type:', typeof params.token)
     
     const supabase = createAdminClient()
-    console.log('Supabase client created')
     
-    const { data: submission, error } = await supabase
+    // First, try to find client by permanent upload_token
+    const { data: client, error: clientError } = await supabase
+      .from('clients')
+      .select('id, name, features, tier')
+      .eq('upload_token', params.token)
+      .maybeSingle()
+    
+    if (client && !clientError) {
+      console.log('✅ Found client by permanent token:', client.name)
+      
+      // Create a "virtual" submission for this client
+      return NextResponse.json({
+        id: null, // No submission yet - first upload
+        client_name: client.name,
+        client_email: null,
+        client_phone: null,
+        status: 'pending',
+        brief_text: null,
+        client_id: client.id,
+        client: client,
+        client_tier: client.tier || 'simple',
+        client_features: client.features || {},
+        is_permanent_link: true,
+      })
+    }
+    
+    // Fall back to legacy submissions table lookup
+    const { data: submission, error: submissionError } = await supabase
       .from('submissions')
       .select('id, client_name, client_email, client_phone, status, brief_text, client_id')
       .eq('upload_token', params.token)
       .maybeSingle()
     
-    console.log('Query executed')
-    console.log('Error:', error)
-    console.log('Submission:', submission ? 'FOUND' : 'NOT FOUND')
-    if (submission) {
-      console.log('Submission ID:', submission.id)
-    }
-    console.log('=== END DEBUG ===')
-    
-    console.log('Query result:', { submission, error })
-    
-    if (error || !submission) {
-      console.error('Submission not found:', { error, submission })
+    if (submissionError || !submission) {
+      console.error('Token not found in clients or submissions:', { submissionError, submission })
       return NextResponse.json(
-        { error: 'Invalid or expired upload link', details: error?.message, hasSubmission: !!submission },
+        { error: 'Invalid or expired upload link' },
         { status: 404 }
       )
     }
     
-    // Get client info separately
-    const { data: client, error: clientError } = await supabase
+    console.log('✅ Found legacy submission token:', submission.id)
+    
+    // Get client info for legacy tokens
+    const { data: legacyClient, error: legacyClientError } = await supabase
       .from('clients')
-      .select('id, name, features')
+      .select('id, name, features, tier')
       .eq('id', submission.client_id)
       .single()
     
-    if (clientError) {
-      console.error('Failed to get client:', clientError)
+    if (legacyClientError) {
+      console.error('Failed to get client:', legacyClientError)
     }
     
-    // Return submission with client tier info
     return NextResponse.json({
       ...submission,
-      client_tier: 'simple', // Default to simple since tier column doesn't exist
-      client_features: client?.features || {},
-      client: client
+      client_tier: legacyClient?.tier || 'simple',
+      client_features: legacyClient?.features || {},
+      client: legacyClient,
+      is_permanent_link: false,
     })
     
   } catch (error: any) {
