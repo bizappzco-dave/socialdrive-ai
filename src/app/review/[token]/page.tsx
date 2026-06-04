@@ -1,82 +1,44 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
-import { Heart, Trash2, CheckCircle, Download, AlertCircle, Loader2, PlayCircle } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { Heart, CheckCircle, AlertCircle, Image as ImageIcon } from 'lucide-react'
 
 interface Post {
   id: string
-  caption_text: string
-  image_url: string
-  video_url?: string | null
-  post_type?: 'image' | 'carousel' | 'video'
-  caption_style: string
-  selected: boolean
+  caption: string
   hashtags: string[]
-  emoji_count: number
-}
-
-interface Submission {
-  id: string
-  client_id: string
-  client_name: string
+  image_urls: string[]
   status: string
-  post_count: number
 }
 
 export default function ReviewPage() {
   const params = useParams()
-  const token = params.token as string
-  
-  const [submission, setSubmission] = useState<Submission | null>(null)
-  const [posts, setPosts] = useState<Post[]>([])
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [processing, setProcessing] = useState(false)
-  const [scheduleInfo, setScheduleInfo] = useState<{
-    type: 'mwf' | 'daily'
-    time: string
-    randomization: number
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  const [submission, setSubmission] = useState<{
+    id: string
+    client_name: string
+    posts: Post[]
   } | null>(null)
+  const [favorites, setFavorites] = useState<string[]>([])
 
   useEffect(() => {
     loadSubmission()
-  }, [token])
+  }, [])
 
   async function loadSubmission() {
     try {
-      // Get submission info
-      const subResponse = await fetch(`/api/submissions/review/${token}`)
-      const subData = await subResponse.json()
+      const response = await fetch(`/api/submissions/review/${params.token}`)
+      const data = await response.json()
       
-      if (!subResponse.ok) {
-        throw new Error(subData.error || 'Invalid review link')
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load submission')
       }
       
-      setSubmission(subData)
-      
-      // Get client schedule preferences
-      const clientResponse = await fetch(`/api/agency/clients/${subData.client_id}`)
-      const clientData = await clientResponse.json()
-      
-      if (clientData.default_schedule_type) {
-        setScheduleInfo({
-          type: clientData.default_schedule_type as 'mwf' | 'daily',
-          time: clientData.default_posting_time || '10:00',
-          randomization: clientData.schedule_randomization || 30,
-        })
-      }
-      
-      // Get posts for this submission
-      const postsResponse = await fetch(`/api/submissions/${subData.id}/posts`)
-      const postsData = await postsResponse.json()
-      
-      if (!postsResponse.ok) {
-        throw new Error(postsData.error || 'Failed to load posts')
-      }
-      
-      setPosts(postsData)
-      
+      setSubmission(data.submission)
     } catch (err: any) {
       console.error('Failed to load submission:', err)
       setError(err.message)
@@ -85,167 +47,48 @@ export default function ReviewPage() {
     }
   }
 
-  async function toggleSelectPost(postId: string, currentlySelected: boolean) {
+  function toggleFavorite(postId: string) {
+    setFavorites(prev => 
+      prev.includes(postId) 
+        ? prev.filter(id => id !== postId)
+        : [...prev, postId]
+    )
+  }
+
+  async function handleSubmit() {
+    if (favorites.length === 0) {
+      setError('Please select at least one favorite')
+      return
+    }
+
+    setSubmitting(true)
+    setError('')
+
     try {
-      const response = await fetch(`/api/posts/${postId}/select`, {
+      const response = await fetch(`/api/submissions/review/${params.token}/select`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          selected: !currentlySelected,
+          favoritePostIds: favorites,
         }),
       })
-      
-      if (!response.ok) {
-        throw new Error('Failed to update post')
-      }
-      
-      setPosts(posts.map(p => 
-        p.id === postId 
-          ? { ...p, selected: !currentlySelected }
-          : p
-      ))
-      
-    } catch (err: any) {
-      setError(err.message)
-    }
-  }
 
-  async function deletePost(postId: string) {
-    if (!confirm('Delete this post? This cannot be undone.')) return
-    
-    try {
-      const response = await fetch(`/api/posts/${postId}`, {
-        method: 'DELETE',
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to delete post')
-      }
-      
-      // Remove from local state immediately (don't wait for reload)
-      setPosts(posts.filter(p => p.id !== postId))
-      
-    } catch (err: any) {
-      setError(err.message)
-    }
-  }
+      const data = await response.json()
 
-  async function handleReadyForPosting() {
-    const selectedPosts = posts.filter(p => p.selected)
-    
-    if (selectedPosts.length === 0) {
-      setError('Please select at least one post to continue')
-      return
-    }
-    
-    setProcessing(true)
-    setError(null)
-    
-    try {
-      // Apply random scheduling to selected posts
-      const schedulePromises = selectedPosts.map(async (post) => {
-        const scheduledDate = calculateRandomizedSchedule(
-          scheduleInfo?.type || 'mwf',
-          scheduleInfo?.time || '10:00',
-          scheduleInfo?.randomization || 30
-        )
-        
-        const response = await fetch(`/api/posts/${post.id}/schedule`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            scheduled_for: scheduledDate.toISOString(),
-          }),
-        })
-        
-        if (!response.ok) {
-          throw new Error(`Failed to schedule post ${post.id}`)
-        }
-        
-        return response
-      })
-      
-      await Promise.all(schedulePromises)
-      
-      // Mark submission as approved
-      const approveResponse = await fetch(`/api/submissions/${submission?.id}/approve`, {
-        method: 'POST',
-      })
-      
-      if (!approveResponse.ok) {
-        throw new Error('Failed to approve submission')
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to schedule posts')
       }
-      
-      // Success! Show confirmation with link to dashboard
-      const scheduleDescription = scheduleInfo?.type === 'mwf' 
-        ? 'Mon/Wed/Fri' 
-        : 'Daily'
-      const timeDisplay = scheduleInfo?.time || '10:00'
-      const randomMin = scheduleInfo?.randomization || 30
-      
-      alert(
-        `✅ ${selectedPosts.length} posts scheduled!\n\n` +
-        `Schedule: ${scheduleDescription} at ~${timeDisplay} (±${randomMin} min)\n` +
-        `Times vary to avoid bot detection.\n\n` +
-        `Posts are ready in your dashboard!`
-      )
-      
-      // Redirect to dashboard
-      window.location.href = '/client/posting'
-      
+
+      // Redirect to success page
+      router.push(`/review/success?count=${favorites.length}`)
     } catch (err: any) {
-      console.error('Scheduling failed:', err)
+      console.error('Failed to schedule posts:', err)
       setError(err.message)
     } finally {
-      setProcessing(false)
+      setSubmitting(false)
     }
-  }
-  
-  // Calculate randomized schedule with anti-bot detection
-  function calculateRandomizedSchedule(
-    scheduleType: 'mwf' | 'daily',
-    baseTime: string,
-    randomizationMinutes: number
-  ): Date {
-    const now = new Date()
-    const [hours, minutes] = baseTime.split(':').map(Number)
-    
-    // Find next available slot based on schedule type
-    let scheduled = new Date(now)
-    scheduled.setHours(hours, minutes, 0, 0)
-    
-    // If today's date is in the past, move to next day
-    if (scheduled < now) {
-      scheduled.setDate(scheduled.getDate() + 1)
-    }
-    
-    // For Mon/Wed/Fri, skip to next valid day
-    if (scheduleType === 'mwf') {
-      const dayOfWeek = scheduled.getDay()
-      if (dayOfWeek === 0) { // Sunday → Monday
-        scheduled.setDate(scheduled.getDate() + 1)
-      } else if (dayOfWeek === 2) { // Monday → OK
-        // Keep as is
-      } else if (dayOfWeek === 3) { // Tuesday → Wednesday
-        scheduled.setDate(scheduled.getDate() + 1)
-      } else if (dayOfWeek === 4) { // Wednesday → OK
-        // Keep as is
-      } else if (dayOfWeek === 5) { // Thursday → Friday
-        scheduled.setDate(scheduled.getDate() + 1)
-      } else if (dayOfWeek === 6) { // Saturday → Monday
-        scheduled.setDate(scheduled.getDate() + 2)
-      }
-    }
-    
-    // Add randomization (±X minutes)
-    const randomOffset = Math.floor(Math.random() * (randomizationMinutes * 2)) - randomizationMinutes
-    scheduled.setMinutes(scheduled.getMinutes() + randomOffset)
-    
-    return scheduled
   }
 
   if (loading) {
@@ -269,204 +112,148 @@ export default function ReviewPage() {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Invalid Link</h1>
           <p className="text-gray-600 mb-4">{error}</p>
           <p className="text-sm text-gray-500">
-            Please contact us to get a new review link.
+            This review link may have expired or is incorrect.
           </p>
         </div>
       </div>
     )
   }
 
+  if (!submission) {
+    return null
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200 mb-4">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-sm font-medium text-gray-700">Reviewing as {submission?.client_name}</span>
+            <span className="text-sm font-medium text-gray-700">Review for {submission.client_name}</span>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Review Your Posts
           </h1>
           <p className="text-gray-600 max-w-md mx-auto">
-            Select your favorite posts by clicking the heart icon. Delete any you don't want, then click "Ready for Posting" to schedule.
+            Select your favorite versions by clicking the heart icon. We'll schedule the ones you choose.
           </p>
-          
-          {/* Schedule Info */}
-          {scheduleInfo && (
-            <div className="mt-4 inline-flex items-center gap-3 bg-blue-50 px-4 py-2 rounded-full shadow-sm border border-blue-200">
-              <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="text-sm font-medium text-blue-800">
-                {scheduleInfo.type === 'mwf' ? 'Mon/Wed/Fri' : 'Daily'} at ~{scheduleInfo.time} (±{scheduleInfo.randomization} min)
-              </span>
-              <span className="text-xs text-blue-600" title="Times vary to avoid bot detection">
-                ⚠️ Anti-bot
-              </span>
+        </div>
+
+        {/* Stats */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-blue-800 font-medium">
+                {submission.posts.length} posts generated
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                Select your favorites to schedule
+              </p>
             </div>
-          )}
-          
-          <div className="mt-6 flex items-center justify-center gap-6 text-sm">
-            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200">
-              <Heart className="h-4 w-4 text-blue-600 fill-blue-600" />
-              <span className="font-medium text-gray-700">{posts.filter(p => p.selected).length} selected</span>
-            </div>
-            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200">
-              <span className="font-medium text-gray-700">{posts.length} total</span>
+            <div className="text-right">
+              <p className="text-2xl font-bold text-blue-600">{favorites.length}</p>
+              <p className="text-xs text-blue-600">selected</p>
             </div>
           </div>
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-r-lg">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
-              <div>
-                <p className="font-medium text-red-800">Something went wrong</p>
-                <p className="text-sm text-red-700 mt-1">{error}</p>
-              </div>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <p className="text-red-800 font-medium">{error}</p>
             </div>
           </div>
         )}
 
         {/* Posts Grid */}
-        {posts.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-            <p className="text-gray-600">No posts generated yet</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {posts.map((post) => (
-              <div
-                key={post.id}
-                className={`bg-white rounded-lg shadow-sm border-2 transition-all ${
-                  post.selected
-                    ? 'border-blue-500 shadow-md'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                {/* Media */}
-                <div className="aspect-square relative overflow-hidden rounded-t-lg bg-gray-100">
-                  {post.post_type === 'video' || post.post_type === 'carousel' ? (
-                    post.video_url ? (
-                      <>
-                        {post.post_type === 'video' ? (
-                          <video
-                            src={post.video_url}
-                            controls
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <img
-                            src={post.video_url}
-                            alt="Carousel"
-                            className="w-full h-full object-cover"
-                          />
-                        )}
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                          <PlayCircle className="h-16 w-16 text-white/80" />
-                        </div>
-                      </>
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <p>Media generating...</p>
-                      </div>
-                    )
-                  ) : (
-                    <img
-                      src={post.image_url}
-                      alt="Post"
-                      className="w-full h-full object-cover"
-                    />
-                  )}
-                  
-                  {/* Selection Button */}
-                  <button
-                    onClick={() => toggleSelectPost(post.id, post.selected)}
-                    className={`absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center transition-all z-10 ${
-                      post.selected
-                        ? 'bg-blue-500 text-white scale-110'
-                        : 'bg-white/90 text-gray-400 hover:text-blue-500'
-                    }`}
-                  >
-                    <Heart className={`h-6 w-6 ${post.selected ? 'fill-current' : ''}`} />
-                  </button>
-                  
-                  {/* Style Badge */}
-                  <div className="absolute top-3 left-3 bg-white/90 backdrop-blur text-xs font-medium px-2 py-1 rounded-full text-gray-700 z-10">
-                    {post.caption_style.replace(/_/g, ' ')}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {submission.posts.map((post, index) => (
+            <div
+              key={post.id}
+              className={`bg-white rounded-xl shadow-sm border-2 transition-all ${
+                favorites.includes(post.id)
+                  ? 'border-pink-500 bg-pink-50'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              {/* Image */}
+              <div className="aspect-square bg-gray-100 rounded-t-xl overflow-hidden">
+                {post.image_urls && post.image_urls.length > 0 ? (
+                  <img
+                    src={post.image_urls[0]}
+                    alt={`Post ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <ImageIcon className="h-12 w-12 text-gray-400" />
                   </div>
-                  
-                  {/* Type Badge */}
-                  {(post.post_type === 'video' || post.post_type === 'carousel') && (
-                    <div className="absolute bottom-3 left-3 bg-purple-600/90 backdrop-blur text-xs font-medium px-2 py-1 rounded-full text-white z-10">
-                      {post.post_type === 'video' ? '🎬 Video' : '🎠 Carousel'}
-                    </div>
-                  )}
-                </div>
-                
-                {/* Caption */}
-                <div className="p-4">
-                  <p className="text-sm text-gray-700 line-clamp-4 mb-3">
-                    {post.caption_text}
-                  </p>
-                  
-                  {/* Hashtags */}
-                  {post.hashtags && post.hashtags.length > 0 && (
-                    <div className="mb-3 flex flex-wrap gap-1">
-                      {post.hashtags.map((tag: string, idx: number) => (
-                        <span
-                          key={idx}
-                          className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs text-gray-500">
-                      {post.emoji_count} emojis • {post.hashtags?.length || 0} hashtags
-                    </div>
-                    
-                    <button
-                      onClick={() => deletePost(post.id)}
-                      className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                      title="Delete this post"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
+                )}
               </div>
-            ))}
-          </div>
-        )}
 
-        {/* Action Bar */}
-        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 sticky bottom-4">
+              {/* Content */}
+              <div className="p-4">
+                {/* Caption Preview */}
+                <div className="mb-4">
+                  <p className="text-sm text-gray-900 line-clamp-3">{post.caption}</p>
+                  {post.hashtags && post.hashtags.length > 0 && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      {post.hashtags.slice(0, 3).join(' ')}
+                      {post.hashtags.length > 3 && ` +${post.hashtags.length - 3} more`}
+                    </p>
+                  )}
+                </div>
+
+                {/* Favorite Button */}
+                <button
+                  type="button"
+                  onClick={() => toggleFavorite(post.id)}
+                  className={`w-full py-2 px-4 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
+                    favorites.includes(post.id)
+                      ? 'bg-pink-500 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  <Heart
+                    className={`h-5 w-5 ${
+                      favorites.includes(post.id) ? 'fill-white' : ''
+                    }`}
+                  />
+                  {favorites.includes(post.id) ? 'Selected' : 'Select'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Submit Button */}
+        <div className="sticky bottom-4 bg-white rounded-xl shadow-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-900 mb-1">
-                {posts.filter(p => p.selected).length} of {posts.length} posts selected
+              <p className="text-sm text-gray-600">
+                {favorites.length} post{favorites.length !== 1 ? 's' : ''} selected
               </p>
               <p className="text-xs text-gray-500">
-                Delete unwanted posts, then export your selection
+                These will be scheduled for automatic posting
               </p>
             </div>
-            
             <button
-              onClick={handleReadyForPosting}
-              disabled={posts.filter(p => p.selected).length === 0 || processing}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+              type="button"
+              onClick={handleSubmit}
+              disabled={favorites.length === 0 || submitting}
+              className={`px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 ${
+                favorites.length === 0 || submitting
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
             >
-              {processing ? (
+              {submitting ? (
                 <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  Processing...
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Scheduling...
                 </>
               ) : (
                 <>
