@@ -33,6 +33,11 @@ export default function ReviewPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
+  const [scheduleInfo, setScheduleInfo] = useState<{
+    type: 'mwf' | 'daily'
+    time: string
+    randomization: number
+  } | null>(null)
 
   useEffect(() => {
     loadSubmission()
@@ -49,6 +54,18 @@ export default function ReviewPage() {
       }
       
       setSubmission(subData)
+      
+      // Get client schedule preferences
+      const clientResponse = await fetch(`/api/agency/clients/${subData.client_id}`)
+      const clientData = await clientResponse.json()
+      
+      if (clientData.default_schedule_type) {
+        setScheduleInfo({
+          type: clientData.default_schedule_type as 'mwf' | 'daily',
+          time: clientData.default_posting_time || '10:00',
+          randomization: clientData.schedule_randomization || 30,
+        })
+      }
       
       // Get posts for this submission
       const postsResponse = await fetch(`/api/submissions/${subData.id}/posts`)
@@ -127,41 +144,108 @@ export default function ReviewPage() {
     setError(null)
     
     try {
+      // Apply random scheduling to selected posts
+      const schedulePromises = selectedPosts.map(async (post) => {
+        const scheduledDate = calculateRandomizedSchedule(
+          scheduleInfo?.type || 'mwf',
+          scheduleInfo?.time || '10:00',
+          scheduleInfo?.randomization || 30
+        )
+        
+        const response = await fetch(`/api/posts/${post.id}/schedule`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            scheduled_for: scheduledDate.toISOString(),
+          }),
+        })
+        
+        if (!response.ok) {
+          throw new Error(`Failed to schedule post ${post.id}`)
+        }
+        
+        return response
+      })
+      
+      await Promise.all(schedulePromises)
+      
       // Mark submission as approved
-      const response = await fetch(`/api/submissions/${submission?.id}/approve`, {
+      const approveResponse = await fetch(`/api/submissions/${submission?.id}/approve`, {
         method: 'POST',
       })
       
-      if (!response.ok) {
+      if (!approveResponse.ok) {
         throw new Error('Failed to approve submission')
       }
       
-      // Download CSV (pass submissionId to filter correctly)
-      const csvResponse = await fetch(`/api/export/sociamonials?clientId=${submission?.client_id}&submissionId=${submission?.id}&scheduleType=random`)
+      // Success! Show confirmation with link to dashboard
+      const scheduleDescription = scheduleInfo?.type === 'mwf' 
+        ? 'Mon/Wed/Fri' 
+        : 'Daily'
+      const timeDisplay = scheduleInfo?.time || '10:00'
+      const randomMin = scheduleInfo?.randomization || 30
       
-      if (!csvResponse.ok) {
-        throw new Error('Failed to generate CSV')
-      }
+      alert(
+        `✅ ${selectedPosts.length} posts scheduled!\n\n` +
+        `Schedule: ${scheduleDescription} at ~${timeDisplay} (±${randomMin} min)\n` +
+        `Times vary to avoid bot detection.\n\n` +
+        `Posts are ready in your dashboard!`
+      )
       
-      // Trigger download
-      const blob = await csvResponse.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `sociamonials_import_${submission?.client_name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-      
-      alert('✅ Posts approved! CSV downloaded. Upload it to Sociamonials to publish.')
+      // Redirect to dashboard
+      window.location.href = '/client/posting'
       
     } catch (err: any) {
-      console.error('Approval failed:', err)
+      console.error('Scheduling failed:', err)
       setError(err.message)
     } finally {
       setProcessing(false)
     }
+  }
+  
+  // Calculate randomized schedule with anti-bot detection
+  function calculateRandomizedSchedule(
+    scheduleType: 'mwf' | 'daily',
+    baseTime: string,
+    randomizationMinutes: number
+  ): Date {
+    const now = new Date()
+    const [hours, minutes] = baseTime.split(':').map(Number)
+    
+    // Find next available slot based on schedule type
+    let scheduled = new Date(now)
+    scheduled.setHours(hours, minutes, 0, 0)
+    
+    // If today's date is in the past, move to next day
+    if (scheduled < now) {
+      scheduled.setDate(scheduled.getDate() + 1)
+    }
+    
+    // For Mon/Wed/Fri, skip to next valid day
+    if (scheduleType === 'mwf') {
+      const dayOfWeek = scheduled.getDay()
+      if (dayOfWeek === 0) { // Sunday → Monday
+        scheduled.setDate(scheduled.getDate() + 1)
+      } else if (dayOfWeek === 2) { // Monday → OK
+        // Keep as is
+      } else if (dayOfWeek === 3) { // Tuesday → Wednesday
+        scheduled.setDate(scheduled.getDate() + 1)
+      } else if (dayOfWeek === 4) { // Wednesday → OK
+        // Keep as is
+      } else if (dayOfWeek === 5) { // Thursday → Friday
+        scheduled.setDate(scheduled.getDate() + 1)
+      } else if (dayOfWeek === 6) { // Saturday → Monday
+        scheduled.setDate(scheduled.getDate() + 2)
+      }
+    }
+    
+    // Add randomization (±X minutes)
+    const randomOffset = Math.floor(Math.random() * (randomizationMinutes * 2)) - randomizationMinutes
+    scheduled.setMinutes(scheduled.getMinutes() + randomOffset)
+    
+    return scheduled
   }
 
   if (loading) {
@@ -205,8 +289,23 @@ export default function ReviewPage() {
             Review Your Posts
           </h1>
           <p className="text-gray-600 max-w-md mx-auto">
-            Select your favorite posts by clicking the heart icon. Delete any you don't want, then click "Ready for Posting" to export.
+            Select your favorite posts by clicking the heart icon. Delete any you don't want, then click "Ready for Posting" to schedule.
           </p>
+          
+          {/* Schedule Info */}
+          {scheduleInfo && (
+            <div className="mt-4 inline-flex items-center gap-3 bg-blue-50 px-4 py-2 rounded-full shadow-sm border border-blue-200">
+              <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-sm font-medium text-blue-800">
+                {scheduleInfo.type === 'mwf' ? 'Mon/Wed/Fri' : 'Daily'} at ~{scheduleInfo.time} (±{scheduleInfo.randomization} min)
+              </span>
+              <span className="text-xs text-blue-600" title="Times vary to avoid bot detection">
+                ⚠️ Anti-bot
+              </span>
+            </div>
+          )}
           
           <div className="mt-6 flex items-center justify-center gap-6 text-sm">
             <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200">
