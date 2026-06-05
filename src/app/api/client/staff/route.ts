@@ -82,68 +82,83 @@ export async function POST(request: NextRequest) {
 
     const supabase = createAdminClient()
 
-    // Find user by email
-    const { data: userData, error: userError } = await supabase.auth.admin.getUserByEmail(email)
+    // Find user by email in our database
+    const { data: existingUser } = await supabase
+      .from('client_staff_access')
+      .select('user_id, users:users (id, email, raw_user_meta_data)')
+      .eq('invited_email', email)
+      .or(`invited_email.is.null, invited_email.eq.${email}`)
+      .maybeSingle()
 
-    if (userError || !userData.user) {
-      // User doesn't exist - create pending invitation
-      const { data: invitation, error: inviteError } = await supabase
+    let userId: string | null = null
+    let userEmail: string | null = null
+    let userName: string | null = null
+
+    if (existingUser?.users) {
+      userId = existingUser.users.id
+      userEmail = existingUser.users.email
+      userName = existingUser.users.raw_user_meta_data?.fullName || existingUser.users.raw_user_meta_data?.name
+    }
+
+    // If user exists, add them directly
+    if (userId) {
+      const { data: access, error: accessError } = await supabase
         .from('client_staff_access')
         .insert({
           client_id: accessResult.access.clientId,
-          invited_email: email,
+          user_id: userId,
           role,
-          invitation_accepted: false,
+          invitation_accepted: true,
         })
         .select()
         .single()
 
-      if (inviteError) {
-        console.error('Failed to create invitation:', inviteError)
-        return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 })
+      if (accessError) {
+        if (accessError.code === '23505') { // Unique violation
+          return NextResponse.json({ error: 'User is already a staff member' }, { status: 409 })
+        }
+        console.error('Failed to add staff:', accessError)
+        return NextResponse.json({ error: 'Failed to add staff' }, { status: 500 })
       }
 
       return NextResponse.json({
         success: true,
-        invitation: {
-          id: invitation.id,
-          email,
-          role,
-          status: 'pending',
+        staff: {
+          id: access.id,
+          user_id: access.user_id,
+          email: userEmail,
+          role: access.role,
         },
-        message: `Invitation sent to ${email}. They will gain access once they create an account.`,
+        message: `${userEmail} added as ${role}`,
       })
     }
 
-    // User exists - add them directly
-    const { data: access, error: accessError } = await supabase
+    // User doesn't exist - create pending invitation
+    const { data: invitation, error: inviteError } = await supabase
       .from('client_staff_access')
       .insert({
         client_id: accessResult.access.clientId,
-        user_id: userData.user.id,
+        invited_email: email,
         role,
-        invitation_accepted: true,
+        invitation_accepted: false,
       })
       .select()
       .single()
 
-    if (accessError) {
-      if (accessError.code === '23505') { // Unique violation
-        return NextResponse.json({ error: 'User is already a staff member' }, { status: 409 })
-      }
-      console.error('Failed to add staff:', accessError)
-      return NextResponse.json({ error: 'Failed to add staff' }, { status: 500 })
+    if (inviteError) {
+      console.error('Failed to create invitation:', inviteError)
+      return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 })
     }
 
     return NextResponse.json({
       success: true,
-      staff: {
-        id: access.id,
-        user_id: access.user_id,
-        email: userData.user.email,
-        role: access.role,
+      invitation: {
+        id: invitation.id,
+        email,
+        role,
+        status: 'pending',
       },
-      message: `${userData.user.email} added as ${role}`,
+      message: `Invitation sent to ${email}. They will gain access once they create an account.`,
     })
 
   } catch (error: any) {
