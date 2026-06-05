@@ -31,8 +31,7 @@ export default function SimpleUploadPage() {
   // Form state
   const [images, setImages] = useState<File[]>([])
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
-  const [brief, setBrief] = useState('')
-  const [prefix, setPrefix] = useState('')  // Optional: text to start every caption
+  const [startText, setStartText] = useState('')  // Text to start every caption (e.g., "🚨 FLASH SALE: Free cuts this week")
   const [context, setContext] = useState('')  // Optional: additional context for AI
   
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -205,7 +204,8 @@ export default function SimpleUploadPage() {
     }
     
     console.log('[MCP] Starting analysis of', images.length, 'images...')
-    console.log('[MCP] Brief text:', brief || '(none)')
+    console.log('[MCP] Start text:', startText || '(none)')
+    console.log('[MCP] Context:', context || '(none)')
     
     const allCaptions = []
     let templateMatch = null
@@ -253,9 +253,7 @@ export default function SimpleUploadPage() {
             template_match: templateMatch ? 'present' : 'missing',
             industry: 'barber',
             count: 3,
-            brief_text: brief || '(empty)',
-            brief_length: brief ? brief.length : 0,
-            prefix_text: prefix || '(empty)',
+            start_text: startText || '(empty)',
             additional_context: context || '(empty)'
           }, null, 2))
           const captionResponse = await fetch(`${MCP_BASE_URL}/generate-captions`, {
@@ -266,8 +264,7 @@ export default function SimpleUploadPage() {
               template_match: templateMatch,
               industry: 'barber',
               count: 3,  // 3 captions per image
-              brief_text: brief || undefined,  // Include brief if provided
-              prefix_text: prefix || undefined,  // Include prefix if provided
+              start_text: startText || undefined,  // Include start text if provided
               additional_context: context || undefined  // Include additional context if provided
             })
           })
@@ -365,8 +362,7 @@ export default function SimpleUploadPage() {
         body: JSON.stringify({
           uploadType: 'images',
           platforms: ['instagram'],
-          briefText: brief,
-          prefixText: prefix,  // Optional prefix for all captions
+          startText: startText,  // Text to start every caption
           additionalContext: context,  // Optional context for AI
           hasVoiceNote: false,
           images: uploadedImages,
@@ -499,57 +495,40 @@ export default function SimpleUploadPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Brief - First Box */}
+          {/* Start Text - First Box */}
           <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-8">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
-              📝 What's Happening This Week?
+              ✨ Start Every Caption With...
             </h2>
             <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">
-              Tell us about any sales, events, or news you want to share.
+              Include your promotion, sale, or announcement. This will appear at the START of every caption.
             </p>
             
             <textarea
-              value={brief}
-              onChange={(e) => setBrief(e.target.value)}
+              value={startText}
+              onChange={(e) => setStartText(e.target.value)}
               placeholder="Examples:
-• '20% off all cuts this week'
-• 'New summer menu just launched'
-• 'Just opened a second location in Dublin'"
+• '🚨 FLASH SALE: 20% off all cuts this week!'
+• 'NEW: Free consultation this week only'
+• '🎓 Enrolling now: Barber course starts Monday'"
               rows={4}
               className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
             />
             
-            {/* Optional: Prefix for all captions */}
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
-                ✨ Optional: Start every caption with...
-              </label>
-              <input
-                type="text"
-                value={prefix}
-                onChange={(e) => setPrefix(e.target.value)}
-                placeholder="e.g., '🚨 FLASH SALE:' or 'NEW AT {BRAND}:'"
-                className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                This text will appear at the START of every caption (before the AI-generated content)
-              </p>
-            </div>
-            
             {/* Optional: Additional context */}
             <div className="mt-4 pt-4 border-t border-gray-200">
               <label className="text-sm font-medium text-gray-700 mb-1 block">
-                🧠 Optional: Extra context for the AI
+                🧠 Optional: Extra instructions
               </label>
               <textarea
                 value={context}
                 onChange={(e) => setContext(e.target.value)}
-                placeholder="e.g., 'Focus on the quality of our training', 'Mention we're accredited', 'Emphasize hands-on learning'..."
+                placeholder="e.g., 'Mention we're accredited', 'Emphasize 1-on-1 mentoring', 'Focus on job placement'..."
                 rows={2}
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Any additional instructions or brand guidelines for caption generation
+                Any additional details or brand guidelines for the AI
               </p>
             </div>
           </div>

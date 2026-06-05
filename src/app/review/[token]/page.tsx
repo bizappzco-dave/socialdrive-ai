@@ -189,13 +189,8 @@ export default function ReviewPage() {
                 <div key={post.id} className="border-b border-gray-100 pb-4 last:border-0">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">Post {index + 1}</span>
-                    {submission.brief_text && post.caption.toLowerCase().includes(submission.brief_text.toLowerCase()) ? (
-                      <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">✅ HAS BRIEF</span>
-                    ) : submission.brief_text ? (
-                      <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded">⚠️ NO BRIEF</span>
-                    ) : null}
                   </div>
-                  <p className="text-gray-800 text-sm leading-relaxed">{post.caption}</p>
+                  <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-line">{post.caption}</p>
                   <p className="text-gray-500 text-xs mt-2">Hashtags: {post.hashtags?.join(' ')}</p>
                 </div>
               ))}

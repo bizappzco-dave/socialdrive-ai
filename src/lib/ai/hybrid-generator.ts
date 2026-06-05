@@ -485,8 +485,7 @@ export async function generatePostVariationsHybrid(params: {
   claudeModel?: string
   count?: number
   styles?: string[]
-  briefText?: string
-  prefixText?: string
+  startText?: string
   additionalContext?: string
 }): Promise<GeneratedPost[]> {
   const { count = 3, claudeModel } = params

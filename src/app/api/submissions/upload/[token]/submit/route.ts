@@ -20,7 +20,7 @@ export async function POST(
     console.log('Request body:', JSON.stringify({
       uploadType: body.uploadType,
       platforms: body.platforms,
-      briefText: body.briefText?.substring(0, 30),
+      startText: body.startText?.substring(0, 30),
       images: body.images?.length,
       hasCaptions: !!body.generatedCaptions,
     }, null, 2))
@@ -46,7 +46,7 @@ export async function POST(
     }
     console.log('✅ Supabase test query SUCCESS, found', testQuery?.length, 'clients')
     
-    const { uploadType, platforms, briefText, prefixText, additionalContext, hasVoiceNote, images, templateMatch, generatedCaptions } = body
+    const { uploadType, platforms, startText, additionalContext, hasVoiceNote, images, templateMatch, generatedCaptions } = body
     
     // Validate platforms
     if (!platforms || platforms.length === 0) {
@@ -188,7 +188,7 @@ export async function POST(
     console.log('Updating submission status...')
     const updateData: any = {
       status: 'pending',
-      brief_text: briefText,
+      brief_text: startText,  // Save start text for reference
       updated_at: new Date().toISOString(),
     }
     
@@ -388,8 +388,7 @@ export async function POST(
             clientTier: clientTier,
             claudeModel: claudeModel,
             count: variationsCount,
-            briefText: briefText,
-            prefixText: prefixText,
+            startText: startText,  // Text to start every caption
             additionalContext: additionalContext,
           })
           console.log('✓ Generated', variations.length, 'variations')
