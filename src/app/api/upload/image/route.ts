@@ -76,11 +76,13 @@ export async function POST(request: Request) {
     
     console.log('Client found, client_id:', clientId)
     
-    // Generate unique filename
+    // Generate unique filename with client folder
     const timestamp = Date.now()
     const randomStr = Math.random().toString(36).substring(2, 8)
     const ext = file.name.split('.').pop()
-    const filename = `${timestamp}-${randomStr}.${ext}`
+    const filename = `${clientId}/${timestamp}-${randomStr}.${ext}`
+    
+    console.log('Uploading to bucket: client-images, path:', filename)
     
     // Upload to Supabase Storage - use public bucket
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -89,6 +91,13 @@ export async function POST(request: Request) {
         cacheControl: '3600',
         upsert: false,
       })
+    
+    if (uploadError) {
+      console.error('Upload error:', uploadError)
+      throw uploadError
+    }
+    
+    console.log('Upload successful:', uploadData)
     
     if (uploadError) {
       throw uploadError

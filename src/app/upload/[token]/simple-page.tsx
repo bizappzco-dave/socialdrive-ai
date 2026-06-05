@@ -252,7 +252,8 @@ export default function SimpleUploadPage() {
               image_base64: base64,
               template_match: templateMatch,
               industry: 'barber',
-              count: 3  // 3 captions per image
+              count: 3,  // 3 captions per image
+              brief_text: brief  // Include the brief text for context
             })
           })
           
