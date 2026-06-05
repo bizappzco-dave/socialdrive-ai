@@ -38,13 +38,15 @@ export async function GET(
       )
     }
     
-    // Check if submission is completed
-    if (submission.status !== 'completed') {
+    // Check if submission is completed (allow pending too - posts are created immediately)
+    if (submission.status === 'error') {
       return NextResponse.json(
-        { error: 'Submission is still being processed' },
-        { status: 400 }
+        { error: 'Submission encountered an error' },
+        { status: 500 }
       )
     }
+    
+    // Allow 'pending' and 'completed' - posts exist in both cases
     
     return NextResponse.json({
       success: true,
