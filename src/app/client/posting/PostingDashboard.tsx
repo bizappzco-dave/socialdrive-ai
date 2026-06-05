@@ -28,6 +28,16 @@ export default function PostingDashboard({ items }: { items: PostItem[] }) {
   const [selectedPosts, setSelectedPosts] = useState<string[]>([])
   const [scheduleDate, setScheduleDate] = useState<string>('')
   const [expandedSection, setExpandedSection] = useState<number>(1)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [creating, setCreating] = useState(false)
+  
+  // New post form state
+  const [newPostImage, setNewPostImage] = useState<File | null>(null)
+  const [newPostImageUrl, setNewPostImageUrl] = useState<string>('')
+  const [newPostCaption, setNewPostCaption] = useState<string>('')
+  const [newPostHashtags, setNewPostHashtags] = useState<string>('')
+  const [newPostPlatform, setNewPostPlatform] = useState<string>('instagram')
+  const [newPostSchedule, setNewPostSchedule] = useState<string>('')
   
   // Platform definitions
   const platforms: Platform[] = [
@@ -138,6 +148,76 @@ export default function PostingDashboard({ items }: { items: PostItem[] }) {
     }
   }
 
+  async function createPost() {
+    if (!newPostCaption) {
+      setMessage('❌ Caption is required')
+      return
+    }
+
+    setCreating(true)
+    setMessage('')
+
+    try {
+      // Upload image if provided
+      let imageUrl = newPostImageUrl
+      if (newPostImage) {
+        const formData = new FormData()
+        formData.append('image', newPostImage)
+        formData.append('token', 'manual') // Will need to get actual token
+        
+        const uploadRes = await fetch('/api/upload/image', {
+          method: 'POST',
+          body: formData,
+        })
+        const uploadData = await uploadRes.json()
+        if (uploadRes.ok) {
+          imageUrl = uploadData.url
+        }
+      }
+
+      // Parse hashtags
+      const hashtags = newPostHashtags
+        .split(/\s+/)
+        .filter(tag => tag.startsWith('#'))
+        .map(tag => tag.replace(/[^#a-zA-Z0-9]/g, ''))
+
+      // Create post
+      const createRes = await fetch('/api/client/posts/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          caption: newPostCaption,
+          hashtags: hashtags,
+          image_urls: imageUrl ? [imageUrl] : [],
+          platform: newPostPlatform,
+          scheduled_for: newPostSchedule || null,
+          status: newPostSchedule ? 'scheduled' : 'draft',
+        }),
+      })
+
+      const createData = await createRes.json()
+      if (!createRes.ok) throw new Error(createData.error || 'Failed to create post')
+
+      setMessage('✅ Post created successfully!')
+      setShowCreateModal(false)
+      
+      // Reset form
+      setNewPostImage(null)
+      setNewPostImageUrl('')
+      setNewPostCaption('')
+      setNewPostHashtags('')
+      setNewPostPlatform('instagram')
+      setNewPostSchedule('')
+      
+      // Refresh after 1.5 seconds
+      setTimeout(() => window.location.reload(), 1500)
+    } catch (e: any) {
+      setMessage(`❌ Error: ${e.message}`)
+    } finally {
+      setCreating(false)
+    }
+  }
+
   return (
     <div className="max-w-[1600px] mx-auto">
       {/* Top Navigation */}
@@ -153,11 +233,19 @@ export default function PostingDashboard({ items }: { items: PostItem[] }) {
       </div>
 
       {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Upload to all platforms with one click</h1>
-        <p className="mt-2 text-gray-600">
-          Upload content to multiple social platforms and automate your posting workflows.
-        </p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Upload to all platforms with one click</h1>
+          <p className="mt-2 text-gray-600">
+            Upload content to multiple social platforms and automate your posting workflows.
+          </p>
+        </div>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="rounded-lg bg-indigo-600 px-6 py-3 text-white font-medium hover:bg-indigo-700 shadow-sm"
+        >
+          + Create Post
+        </button>
       </div>
 
       {/* Two-Column Layout */}
@@ -533,5 +621,85 @@ export default function PostingDashboard({ items }: { items: PostItem[] }) {
         </div>
       </div>
     </div>
-  )
-}
+
+    {/* Create Post Modal */}
+    {showCreateModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-xl">
+            <h3 className="text-xl font-semibold text-gray-900">Create New Post</h3>
+            <button
+              onClick={() => setShowCreateModal(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
+          <div className="p-6 space-y-6">
+            {/* Image Upload */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Image (Optional)</label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                {newPostImageUrl || newPostImage ? (
+                  <div className="relative">
+                    <img src={newPostImageUrl || URL.createObjectURL(newPostImage!)} alt="Preview" className="max-h-64 mx-auto rounded-lg" />
+                    <button onClick={() => { setNewPostImage(null); setNewPostImageUrl(''); }} className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700">
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    <p className="mt-2 text-sm text-gray-600">Drop an image here or click to upload</p>
+                    <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) { setNewPostImage(file); setNewPostImageUrl(URL.createObjectURL(file)); } }} className="mt-4" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Platform */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Platform</label>
+              <select value={newPostPlatform} onChange={(e) => setNewPostPlatform(e.target.value)} className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <option value="instagram">Instagram</option>
+                <option value="facebook">Facebook</option>
+                <option value="linkedin">LinkedIn</option>
+                <option value="tiktok">TikTok</option>
+                <option value="x">X (Twitter)</option>
+              </select>
+            </div>
+
+            {/* Caption */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Caption *</label>
+              <textarea value={newPostCaption} onChange={(e) => setNewPostCaption(e.target.value)} rows={6} placeholder="Write your caption here..." className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+              <p className="mt-1 text-xs text-gray-500">{newPostCaption.length} / 2200 characters</p>
+            </div>
+
+            {/* Hashtags */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Hashtags</label>
+              <textarea value={newPostHashtags} onChange={(e) => setNewPostHashtags(e.target.value)} rows={3} placeholder="#barber #haircut #style" className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+            </div>
+
+            {/* Schedule */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Schedule (Optional)</label>
+              <input type="datetime-local" value={newPostSchedule} onChange={(e) => setNewPostSchedule(e.target.value)} className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+              <p className="mt-1 text-xs text-gray-500">Leave empty to save as draft</p>
+            </div>
+          </div>
+
+          <div className="p-6 border-t border-gray-200 flex gap-3 sticky bottom-0 bg-white rounded-b-xl">
+            <button onClick={() => setShowCreateModal(false)} className="flex-1 rounded-lg border border-gray-300 px-6 py-3 text-gray-700 font-medium hover:bg-gray-50">Cancel</button>
+            <button onClick={createPost} disabled={creating || !newPostCaption} className="flex-1 rounded-lg bg-indigo-600 px-6 py-3 text-white font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
+              {creating ? 'Creating...' : 'Create Post'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
