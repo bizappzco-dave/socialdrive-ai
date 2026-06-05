@@ -246,6 +246,14 @@ export default function SimpleUploadPage() {
           
           // Call MCP caption generation
           console.log('[MCP] Calling caption generation for image', i + 1)
+          console.log('[MCP] Request payload:', JSON.stringify({
+            image_base64: base64.substring(0, 50) + '...',
+            template_match: templateMatch ? 'present' : 'missing',
+            industry: 'barber',
+            count: 3,
+            brief_text: brief || '(empty)',
+            brief_length: brief ? brief.length : 0
+          }, null, 2))
           const captionResponse = await fetch(`${MCP_BASE_URL}/generate-captions`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
