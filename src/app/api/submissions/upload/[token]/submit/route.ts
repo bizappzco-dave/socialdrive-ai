@@ -206,14 +206,14 @@ export async function POST(
       }
     }
     
-    const { error: updateError } = await supabase
+    const { error: submissionUpdateError } = await supabase
       .from('submissions')
       .update(updateData)
       .eq('id', submission.id)
     
-    if (updateError) {
-      console.error('Failed to update submission:', updateError)
-      throw new Error('Failed to update submission: ' + updateError.message)
+    if (submissionUpdateError) {
+      console.error('Failed to update submission:', submissionUpdateError)
+      throw new Error('Failed to update submission: ' + submissionUpdateError.message)
     }
     console.log('Submission updated successfully')
     
@@ -584,7 +584,7 @@ export async function POST(
     
     // Update submission status to completed
     console.log('Updating submission status to completed for:', submission.id)
-    const { error: updateError } = await supabase
+    const { error: statusUpdateError } = await supabase
       .from('submissions')
       .update({
         status: 'completed',
@@ -592,8 +592,8 @@ export async function POST(
       })
       .eq('id', submission.id)
     
-    if (updateError) {
-      console.error('Failed to update submission status:', updateError)
+    if (statusUpdateError) {
+      console.error('Failed to update submission status:', statusUpdateError)
     } else {
       console.log('✅ Submission status updated to completed')
     }
