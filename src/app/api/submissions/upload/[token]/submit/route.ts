@@ -46,7 +46,7 @@ export async function POST(
     }
     console.log('✅ Supabase test query SUCCESS, found', testQuery?.length, 'clients')
     
-    const { uploadType, platforms, briefText, hasVoiceNote, images, templateMatch, generatedCaptions } = body
+    const { uploadType, platforms, briefText, prefixText, additionalContext, hasVoiceNote, images, templateMatch, generatedCaptions } = body
     
     // Validate platforms
     if (!platforms || platforms.length === 0) {
@@ -389,6 +389,8 @@ export async function POST(
             claudeModel: claudeModel,
             count: variationsCount,
             briefText: briefText,
+            prefixText: prefixText,
+            additionalContext: additionalContext,
           })
           console.log('✓ Generated', variations.length, 'variations')
         } catch (genError: any) {

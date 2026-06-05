@@ -32,6 +32,8 @@ export default function SimpleUploadPage() {
   const [images, setImages] = useState<File[]>([])
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [brief, setBrief] = useState('')
+  const [prefix, setPrefix] = useState('')  // Optional: text to start every caption
+  const [context, setContext] = useState('')  // Optional: additional context for AI
   
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -252,7 +254,9 @@ export default function SimpleUploadPage() {
             industry: 'barber',
             count: 3,
             brief_text: brief || '(empty)',
-            brief_length: brief ? brief.length : 0
+            brief_length: brief ? brief.length : 0,
+            prefix_text: prefix || '(empty)',
+            additional_context: context || '(empty)'
           }, null, 2))
           const captionResponse = await fetch(`${MCP_BASE_URL}/generate-captions`, {
             method: 'POST',
@@ -262,7 +266,9 @@ export default function SimpleUploadPage() {
               template_match: templateMatch,
               industry: 'barber',
               count: 3,  // 3 captions per image
-              brief_text: brief || undefined  // Include brief if provided
+              brief_text: brief || undefined,  // Include brief if provided
+              prefix_text: prefix || undefined,  // Include prefix if provided
+              additional_context: context || undefined  // Include additional context if provided
             })
           })
           
@@ -360,6 +366,8 @@ export default function SimpleUploadPage() {
           uploadType: 'images',
           platforms: ['instagram'],
           briefText: brief,
+          prefixText: prefix,  // Optional prefix for all captions
+          additionalContext: context,  // Optional context for AI
           hasVoiceNote: false,
           images: uploadedImages,
           templateMatch: finalTemplateMatch,
@@ -511,6 +519,39 @@ export default function SimpleUploadPage() {
               className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
             />
             
+            {/* Optional: Prefix for all captions */}
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                ✨ Optional: Start every caption with...
+              </label>
+              <input
+                type="text"
+                value={prefix}
+                onChange={(e) => setPrefix(e.target.value)}
+                placeholder="e.g., '🚨 FLASH SALE:' or 'NEW AT {BRAND}:'"
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                This text will appear at the START of every caption (before the AI-generated content)
+              </p>
+            </div>
+            
+            {/* Optional: Additional context */}
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                🧠 Optional: Extra context for the AI
+              </label>
+              <textarea
+                value={context}
+                onChange={(e) => setContext(e.target.value)}
+                placeholder="e.g., 'Focus on the quality of our training', 'Mention we're accredited', 'Emphasize hands-on learning'..."
+                rows={2}
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Any additional instructions or brand guidelines for caption generation
+              </p>
+            </div>
           </div>
 
           {/* Photo Upload - Second Box */}
@@ -527,29 +568,31 @@ export default function SimpleUploadPage() {
               </p>
             </div>
             
-            {/* Drag & Drop Zone */}
-            <div
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 sm:border-3 border-dashed border-gray-300 rounded-xl p-6 sm:p-12 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all"
-            >
-              <Upload className="h-12 w-12 sm:h-16 sm:w-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
-              <p className="text-base sm:text-lg text-gray-700 font-medium mb-2">
-                Drag & drop your photos
-              </p>
-              <p className="text-sm sm:text-base text-gray-500">
-                or click to browse
-              </p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => handleFileSelect(e.target.files)}
-                className="hidden"
-              />
-            </div>
+            {/* Drag & Drop Zone - Only show if no images uploaded yet */}
+            {images.length === 0 && (
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 sm:border-3 border-dashed border-gray-300 rounded-xl p-6 sm:p-12 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all"
+              >
+                <Upload className="h-12 w-12 sm:h-16 sm:w-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                <p className="text-base sm:text-lg text-gray-700 font-medium mb-2">
+                  Drag & drop your photos
+                </p>
+                <p className="text-sm sm:text-base text-gray-500">
+                  or click to browse
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => handleFileSelect(e.target.files)}
+                  className="hidden"
+                />
+              </div>
+            )}
 
             {/* Image Previews */}
             {imagePreviews.length > 0 && (
@@ -572,6 +615,30 @@ export default function SimpleUploadPage() {
                     </button>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Add More Button - Only show if images already uploaded */}
+            {images.length > 0 && (
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add more photos
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => handleFileSelect(e.target.files)}
+                  className="hidden"
+                />
               </div>
             )}
 

@@ -54,6 +54,7 @@ export async function GET(
         id: submission.id,
         client_id: submission.client_id,
         client_name: submission.client_name,
+        brief_text: submission.brief_text || '',  // Include brief_text for detection
         status: submission.status,
         posts: submission.posts || [],
       }

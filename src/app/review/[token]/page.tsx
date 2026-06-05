@@ -20,7 +20,9 @@ export default function ReviewPage() {
   const [error, setError] = useState('')
   const [submission, setSubmission] = useState<{
     id: string
+    client_id: string
     client_name: string
+    brief_text?: string
     posts: Post[]
   } | null>(null)
   const [favorites, setFavorites] = useState<string[]>([])
@@ -178,11 +180,11 @@ export default function ReviewPage() {
                 <div key={post.id} className="border-b border-gray-100 pb-4 last:border-0">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">Post {index + 1}</span>
-                    {post.caption.toLowerCase().includes('free') || post.caption.toLowerCase().includes('signup') || post.caption.toLowerCase().includes('places') ? (
+                    {submission.brief_text && post.caption.toLowerCase().includes(submission.brief_text.toLowerCase()) ? (
                       <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">✅ HAS BRIEF</span>
-                    ) : (
+                    ) : submission.brief_text ? (
                       <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded">⚠️ NO BRIEF</span>
-                    )}
+                    ) : null}
                   </div>
                   <p className="text-gray-800 text-sm leading-relaxed">{post.caption}</p>
                   <p className="text-gray-500 text-xs mt-2">Hashtags: {post.hashtags?.join(' ')}</p>
