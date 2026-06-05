@@ -103,9 +103,9 @@ export async function POST(request: Request) {
       throw uploadError
     }
     
-    // Get public URL
+    // Get public URL from client-images bucket
     const { data: { publicUrl } } = supabase.storage
-      .from('submissions')
+      .from('client-images')
       .getPublicUrl(filename)
     
     return NextResponse.json({
