@@ -1,0 +1,153 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { getCurrentUserClientAccess } from '@/lib/client-access'
+
+/**
+ * GET /api/client/staff
+ * List all staff members for the current client
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const accessResult = await getCurrentUserClientAccess()
+    if (!accessResult) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const supabase = createAdminClient()
+
+    // Get all staff for this client
+    const { data: staff, error } = await supabase
+      .from('client_staff_access')
+      .select(`
+        id,
+        user_id,
+        role,
+        created_at,
+        invited_email,
+        invitation_accepted,
+        users:users (
+          id,
+          email,
+          raw_user_meta_data
+        )
+      `)
+      .eq('client_id', accessResult.access.clientId)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Failed to load staff:', error)
+      return NextResponse.json({ error: 'Failed to load staff' }, { status: 500 })
+    }
+
+    // Format staff list
+    const formattedStaff = staff.map((s: any) => ({
+      id: s.id,
+      user_id: s.user_id,
+      email: s.users?.email || s.invited_email,
+      role: s.role,
+      created_at: s.created_at,
+      invitation_accepted: s.invitation_accepted,
+      name: s.users?.raw_user_meta_data?.fullName || s.users?.raw_user_meta_data?.name,
+    }))
+
+    return NextResponse.json({ staff: formattedStaff })
+
+  } catch (error: any) {
+    console.error('List staff error:', error.message)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
+
+/**
+ * POST /api/client/staff
+ * Add a new staff member to the current client
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const accessResult = await getCurrentUserClientAccess()
+    if (!accessResult) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { email, role = 'viewer' } = body
+
+    if (!email) {
+      return NextResponse.json({ error: 'Email is required' }, { status: 400 })
+    }
+
+    if (!['admin', 'staff', 'viewer'].includes(role)) {
+      return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+    }
+
+    const supabase = createAdminClient()
+
+    // Find user by email
+    const { data: userData, error: userError } = await supabase.auth.admin.getUserByEmail(email)
+
+    if (userError || !userData.user) {
+      // User doesn't exist - create pending invitation
+      const { data: invitation, error: inviteError } = await supabase
+        .from('client_staff_access')
+        .insert({
+          client_id: accessResult.access.clientId,
+          invited_email: email,
+          role,
+          invitation_accepted: false,
+        })
+        .select()
+        .single()
+
+      if (inviteError) {
+        console.error('Failed to create invitation:', inviteError)
+        return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 })
+      }
+
+      return NextResponse.json({
+        success: true,
+        invitation: {
+          id: invitation.id,
+          email,
+          role,
+          status: 'pending',
+        },
+        message: `Invitation sent to ${email}. They will gain access once they create an account.`,
+      })
+    }
+
+    // User exists - add them directly
+    const { data: access, error: accessError } = await supabase
+      .from('client_staff_access')
+      .insert({
+        client_id: accessResult.access.clientId,
+        user_id: userData.user.id,
+        role,
+        invitation_accepted: true,
+      })
+      .select()
+      .single()
+
+    if (accessError) {
+      if (accessError.code === '23505') { // Unique violation
+        return NextResponse.json({ error: 'User is already a staff member' }, { status: 409 })
+      }
+      console.error('Failed to add staff:', accessError)
+      return NextResponse.json({ error: 'Failed to add staff' }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      success: true,
+      staff: {
+        id: access.id,
+        user_id: access.user_id,
+        email: userData.user.email,
+        role: access.role,
+      },
+      message: `${userData.user.email} added as ${role}`,
+    })
+
+  } catch (error: any) {
+    console.error('Add staff error:', error.message)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
