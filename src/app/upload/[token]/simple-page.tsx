@@ -266,7 +266,9 @@ export default function SimpleUploadPage() {
             })
           })
           
+          console.log('[MCP] Caption response status:', captionResponse.status)
           const captionData = await captionResponse.json()
+          console.log('[MCP] Caption response data:', JSON.stringify(captionData, null, 2).substring(0, 500))
           
           if (captionData.success) {
             const imageCaptions = captionData.captions
