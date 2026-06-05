@@ -41,6 +41,15 @@ export default function ReviewPage() {
         throw new Error(data.error || 'Failed to load submission')
       }
       
+      console.log('=== REVIEW PAGE DEBUG ===')
+      console.log('brief_text from API:', data.submission.brief_text)
+      console.log('brief_text length:', data.submission.brief_text?.length)
+      console.log('Number of posts:', data.submission.posts?.length)
+      if (data.submission.posts?.length > 0) {
+        console.log('First caption preview:', data.submission.posts[0].caption.substring(0, 100))
+      }
+      console.log('========================')
+      
       setSubmission(data.submission)
     } catch (err: any) {
       console.error('Failed to load submission:', err)
