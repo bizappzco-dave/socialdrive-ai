@@ -365,7 +365,20 @@ export default function SimpleUploadPage() {
         throw new Error(errorData.error || 'Submission failed')
       }
       
-      console.log('[Submit] Success!')
+      const submitData = await submitResponse.json()
+      console.log('=== SUBMIT RESPONSE (simple-page) ===')
+      console.log('Status:', submitResponse.status)
+      console.log('reviewToken present:', !!submitData.reviewToken)
+      console.log('reviewToken:', submitData.reviewToken ? submitData.reviewToken.substring(0, 12) + '...' : 'NONE')
+      
+      // Redirect to review page with the review token
+      if (submitData.reviewToken) {
+        console.log('🎉 REDIRECTING to review page with token:', submitData.reviewToken)
+        window.location.href = `/review/${submitData.reviewToken}`
+        return  // Don't set uploaded state, we're redirecting
+      }
+      
+      console.warn('⚠️ No reviewToken in response, showing success message')
       setUploaded(true)
       
     } catch (err: any) {
