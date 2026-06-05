@@ -195,89 +195,85 @@ export default function SimpleUploadPage() {
     handleFileSelect(e.dataTransfer.files)
   }
 
-  // MCP Analysis: Analyze images and generate captions (silent, no UI)
+  // MCP Analysis: Analyze ALL images and generate captions (silent, no UI)
   async function analyzeImagesWithMCP() {
     if (images.length === 0) {
       console.log('[MCP] No images to analyze')
       return null
     }
     
-    console.log('[MCP] Starting analysis...')
+    console.log('[MCP] Starting analysis of', images.length, 'images...')
     
-    try {
-      // Convert first image to base64
-      const file = images[0]
-      console.log('[MCP] Converting image to base64:', file.name, file.size, 'bytes')
+    const allCaptions = []
+    let templateMatch = null
+    
+    // Analyze each image separately
+    for (let i = 0; i < images.length; i++) {
+      const file = images[i]
+      console.log(`[MCP] Analyzing image ${i + 1}/${images.length}:`, file.name)
       
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(reader.result as string)
-        reader.onerror = reject
-        reader.readAsDataURL(file)
-      })
-      
-      console.log('[MCP] Base64 length:', base64.length, 'chars')
-      
-      // Call MCP template match (production URL)
-      const MCP_BASE_URL = process.env.NEXT_PUBLIC_MCP_URL || 'https://social-drive-mcp-railway-production-cb81.up.railway.app'
-      console.log('[MCP] Calling template match:', MCP_BASE_URL)
-      
-      const templateResponse = await fetch(`${MCP_BASE_URL}/template/match`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_base64: base64, industry: 'barber' })
-      })
-      
-      console.log('[MCP] Template response status:', templateResponse.status)
-      
-      if (!templateResponse.ok) throw new Error('MCP server unavailable')
-      
-      const templateData = await templateResponse.json()
-      console.log('[MCP] Template data:', JSON.stringify(templateData, null, 2))
-      
-      let templateMatch = null
-      let captions = []
-      
-      if (templateData.success) {
-        // templateData is already the template match object (no need to parse again)
-        templateMatch = templateData.template_match || templateData
-        setTemplateMatch(templateMatch)
-        
-        // Call MCP caption generation (production URL)
-        console.log('[MCP] Calling caption generation...')
-        const captionResponse = await fetch(`${MCP_BASE_URL}/generate-captions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            image_base64: base64,
-            template_match: templateMatch,
-            industry: 'barber',
-            count: 3  // 3 captions per image for client to choose from
-          })
+      try {
+        // Convert image to base64
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as string)
+          reader.onerror = reject
+          reader.readAsDataURL(file)
         })
         
-        console.log('[MCP] Caption response status:', captionResponse.status)
-        const captionData = await captionResponse.json()
-        console.log('[MCP] Caption data:', JSON.stringify(captionData, null, 2))
+        console.log('[MCP] Base64 length:', base64.length, 'chars')
         
-        if (captionData.success) {
-          captions = captionData.captions
-          setGeneratedCaptions(captionData.captions)
-          console.log('[MCP] ✅ Generated', captions.length, 'captions')
-        } else {
-          console.error('[MCP] ❌ Caption generation failed:', captionData.error)
+        // Call MCP template match (production URL)
+        const MCP_BASE_URL = process.env.NEXT_PUBLIC_MCP_URL || 'https://social-drive-mcp-railway-production-cb81.up.railway.app'
+        
+        const templateResponse = await fetch(`${MCP_BASE_URL}/template/match`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image_base64: base64, industry: 'barber' })
+        })
+        
+        if (!templateResponse.ok) throw new Error('MCP server unavailable')
+        
+        const templateData = await templateResponse.json()
+        
+        if (templateData.success) {
+          // Use first image's template match for all
+          if (i === 0) {
+            templateMatch = templateData.template_match || templateData
+            setTemplateMatch(templateMatch)
+          }
+          
+          // Call MCP caption generation
+          console.log('[MCP] Calling caption generation for image', i + 1)
+          const captionResponse = await fetch(`${MCP_BASE_URL}/generate-captions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              image_base64: base64,
+              template_match: templateMatch,
+              industry: 'barber',
+              count: 3  // 3 captions per image
+            })
+          })
+          
+          const captionData = await captionResponse.json()
+          
+          if (captionData.success) {
+            const imageCaptions = captionData.captions
+            allCaptions.push(...imageCaptions)
+            console.log(`[MCP] ✅ Image ${i + 1}: Generated`, imageCaptions.length, 'captions')
+          }
         }
-      } else {
-        console.error('[MCP] ❌ Template match failed:', templateData.error)
+      } catch (err: any) {
+        console.error(`[MCP] ❌ Failed to analyze image ${i + 1}:`, err.message)
       }
-      
-      // Return the results so caller can use them immediately (not from async state)
-      return { templateMatch, captions }
-    } catch (err: any) {
-      console.error('[MCP] ❌ Analysis failed:', err)
-      // Silently continue - server will handle fallback
-      return null
     }
+    
+    setGeneratedCaptions(allCaptions)
+    console.log('[MCP] ✅ Total captions generated:', allCaptions.length)
+    
+    // Return the results so caller can use them immediately (not from async state)
+    return { templateMatch, captions: allCaptions }
   }
 
   // Handle form submission
