@@ -281,7 +281,10 @@ export default function UploadPage() {
         }),
       })
       
-      console.log('Submit response status:', submitResponse.status)
+      console.log('=== SUBMIT RESPONSE ===')
+      console.log('Status:', submitResponse.status)
+      console.log('OK:', submitResponse.ok)
+      console.log('======================')
       
       if (!submitResponse.ok) {
         const errorData = await submitResponse.json()
@@ -290,16 +293,20 @@ export default function UploadPage() {
       }
       
       const submitData = await submitResponse.json()
-      console.log('Submit success, reviewToken present:', !!submitData.reviewToken)
+      console.log('Submit data keys:', Object.keys(submitData))
+      console.log('reviewToken present:', !!submitData.reviewToken)
+      console.log('reviewToken value:', submitData.reviewToken ? submitData.reviewToken.substring(0, 12) + '...' : 'NONE')
       
       // Redirect to review page with the review token
       if (submitData.reviewToken) {
-        console.log('🎉 Redirecting to review page with token:', submitData.reviewToken.substring(0, 8) + '...')
+        console.log('🎉 REDIRECTING to review page with token:', submitData.reviewToken)
+        console.log('Full redirect URL:', `/review/${submitData.reviewToken}`)
         window.location.href = `/review/${submitData.reviewToken}`
         return  // Don't set uploaded state, we're redirecting
       }
       
-      console.warn('⚠️ No reviewToken in response, falling back to legacy flow')
+      console.warn('⚠️ NO reviewToken in response! Falling back to legacy flow')
+      console.warn('Full submitData:', JSON.stringify(submitData, null, 2))
       // Fallback for legacy submissions without review token
       setUploaded(true)
       
