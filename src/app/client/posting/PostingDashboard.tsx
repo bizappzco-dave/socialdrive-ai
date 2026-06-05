@@ -234,11 +234,16 @@ export default function PostingDashboard({ items }: { items: PostItem[] }) {
 
       {/* Page Header */}
       <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Upload to all platforms with one click</h1>
-          <p className="mt-2 text-gray-600">
-            Upload content to multiple social platforms and automate your posting workflows.
-          </p>
+        <div className="flex items-center gap-4">
+          <a href="/" className="text-indigo-600 hover:text-indigo-700 font-medium">
+            ← Dashboard
+          </a>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Upload to all platforms with one click</h1>
+            <p className="mt-2 text-gray-600">
+              Upload content to multiple social platforms and automate your posting workflows.
+            </p>
+          </div>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
