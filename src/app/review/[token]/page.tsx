@@ -24,6 +24,7 @@ export default function ReviewPage() {
     posts: Post[]
   } | null>(null)
   const [favorites, setFavorites] = useState<string[]>([])
+  const [showAllText, setShowAllText] = useState(false)  // For full text view
 
   useEffect(() => {
     loadSubmission()
@@ -157,6 +158,39 @@ export default function ReviewPage() {
             </div>
           </div>
         </div>
+
+        {/* View All Text Button */}
+        <div className="mb-8">
+          <button
+            onClick={() => setShowAllText(!showAllText)}
+            className="w-full bg-white border-2 border-blue-200 hover:border-blue-400 text-blue-700 font-semibold py-3 px-6 rounded-lg transition-all"
+          >
+            {showAllText ? '👁️ Hide Full Text View' : '📄 Show All Captions (Full Text)'}
+          </button>
+        </div>
+
+        {/* Full Text View */}
+        {showAllText && (
+          <div className="bg-white border border-gray-200 rounded-xl p-6 mb-8">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">📋 All Captions (Full Text)</h3>
+            <div className="space-y-4">
+              {submission.posts.map((post, index) => (
+                <div key={post.id} className="border-b border-gray-100 pb-4 last:border-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">Post {index + 1}</span>
+                    {post.caption.toLowerCase().includes('free') || post.caption.toLowerCase().includes('signup') || post.caption.toLowerCase().includes('places') ? (
+                      <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">✅ HAS BRIEF</span>
+                    ) : (
+                      <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded">⚠️ NO BRIEF</span>
+                    )}
+                  </div>
+                  <p className="text-gray-800 text-sm leading-relaxed">{post.caption}</p>
+                  <p className="text-gray-500 text-xs mt-2">Hashtags: {post.hashtags?.join(' ')}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Error Message */}
         {error && (
