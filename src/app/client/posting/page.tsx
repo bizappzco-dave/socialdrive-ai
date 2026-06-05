@@ -1,7 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getCurrentUserClientAccess } from '@/lib/client-access'
 import { redirect } from 'next/navigation'
-import PostingQueueClient from './PostingQueueClient'
+import PostingDashboard from './PostingDashboard'
 
 export default async function ClientPostingPage() {
   const accessResult = await getCurrentUserClientAccess()
@@ -25,14 +25,7 @@ export default async function ClientPostingPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg bg-white p-6 shadow-sm border border-gray-200">
-        <h1 className="text-2xl font-bold text-gray-900">Manual Posting Dashboard</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Publish draft posts to social media. Role: {accessResult.access.role}
-        </p>
-      </div>
-
-      <PostingQueueClient items={(posts as any) || []} />
+      <PostingDashboard items={(posts as any) || []} />
     </div>
   )
 }
