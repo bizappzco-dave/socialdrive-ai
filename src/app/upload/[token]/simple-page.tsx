@@ -372,7 +372,11 @@ export default function SimpleUploadPage() {
       // Redirect to review page with the review token
       if (submitData.reviewToken) {
         console.log('🎉 REDIRECTING to review page with token:', submitData.reviewToken)
-        window.location.href = `/review/${submitData.reviewToken}`
+        console.log('⏳ Redirecting in 3 seconds... (check console for upload logs)')
+        console.log('Upload path:', uploadedImages[0]?.path || 'N/A')
+        setTimeout(() => {
+          window.location.href = `/review/${submitData.reviewToken}`
+        }, 3000)  // 3 second delay to see logs
         return  // Don't set uploaded state, we're redirecting
       }
       
