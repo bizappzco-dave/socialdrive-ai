@@ -65,7 +65,7 @@ export async function POST(request: Request) {
         clientTier: 'standard', // Will force Claude anyway
         claudeModel: 'claude-sonnet-4-5-20250929',
         count: 1,
-        briefText: 'Test',
+        startText: 'Test',
       })
       results.claudeTest = '✓ SUCCESS'
       console.log('Step 3: ✓ Claude API works, generated', testVariation.length, 'variations')
