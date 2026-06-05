@@ -583,13 +583,20 @@ export async function POST(
     }
     
     // Update submission status to completed
-    await supabase
+    console.log('Updating submission status to completed for:', submission.id)
+    const { error: updateError } = await supabase
       .from('submissions')
       .update({
         status: 'completed',
         updated_at: new Date().toISOString(),
       })
       .eq('id', submission.id)
+    
+    if (updateError) {
+      console.error('Failed to update submission status:', updateError)
+    } else {
+      console.log('✅ Submission status updated to completed')
+    }
     
     // Auto-delete any posts with non-English text (CJK characters)
     const cjkRegex = /[\u4e00-\u9fff\u3400-\u4dbf\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]/u
