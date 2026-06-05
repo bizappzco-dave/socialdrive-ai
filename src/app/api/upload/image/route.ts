@@ -80,11 +80,11 @@ export async function POST(request: Request) {
     const timestamp = Date.now()
     const randomStr = Math.random().toString(36).substring(2, 8)
     const ext = file.name.split('.').pop()
-    const filename = `${clientId}/${timestamp}-${randomStr}.${ext}`
+    const filename = `${timestamp}-${randomStr}.${ext}`
     
-    // Upload to Supabase Storage
+    // Upload to Supabase Storage - use public bucket
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('submissions')
+      .from('client-images')  // Public bucket
       .upload(filename, file, {
         cacheControl: '3600',
         upsert: false,
