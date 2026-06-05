@@ -299,19 +299,23 @@ export async function POST(
     if (hasPreGeneratedCaptions) {
       console.log('✅ Using', generatedCaptions.length, 'pre-generated captions from MCP (no AI generation needed)')
       
-      // IMPORTANT: MCP generates 3 captions for the FIRST image only
-      // We create 3 posts for EACH image using those same 3 captions
-      // This gives us: 3 images × 3 captions = 9 posts total
-      // (or 5 images × 3 captions = 15 posts)
+      // NEW: MCP now generates 3 captions PER image
+      // So we have: 3 images × 3 captions = 9 captions total
+      // Create 1 post per caption (captions are already image-specific)
+      // This gives us: 9 posts total (matching the 9 captions)
+      
+      // Distribute captions across images evenly
+      const captionsPerImage = Math.floor(generatedCaptions.length / images.length) || generatedCaptions.length
       
       for (let i = 0; i < images.length; i++) {
         const image = images[i]
-        console.log('Creating 3 posts for image', i + 1, 'of', images.length, 'with pre-generated captions')
+        const startIdx = i * captionsPerImage
+        const endIdx = Math.min(startIdx + captionsPerImage, generatedCaptions.length)
+        const imageCaptions = generatedCaptions.slice(startIdx, endIdx)
         
-        // Use ALL captions for this image (3 captions = 3 posts per image)
-        for (let j = 0; j < generatedCaptions.length; j++) {
-          const captionData = generatedCaptions[j]
+        console.log(`Creating ${imageCaptions.length} posts for image ${i + 1}/${images.length}`)
         
+        for (const captionData of imageCaptions) {
           // Parse caption and hashtags
           let caption = captionData.caption || captionData.text || ''
           let hashtags = captionData.hashtags || []
@@ -353,8 +357,8 @@ export async function POST(
             console.log('✅ Post created successfully:', post.id)
             allPosts.push(post)
           }
-        } // Close inner loop (j) - 3 captions per image
-      } // Close outer loop (i) - all images
+        }
+      }
       
       console.log('✅ Created', allPosts.length, 'posts with pre-generated captions')
     } else {
