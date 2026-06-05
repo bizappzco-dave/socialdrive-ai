@@ -325,15 +325,8 @@ export async function POST(
             hashtags = hashtags.split(' ').filter(h => h.trim())
           }
           
-          // Validate caption length (Sociamonials limit: 280 chars)
-          const fullCaption = caption + ' ' + hashtags.join(' ')
-          if (fullCaption.length > 280) {
-            console.warn(`Caption too long (${fullCaption.length} chars), truncating to fit limit...`)
-            const hashtagLength = hashtags.join(' ').length + 1
-            const maxCaptionLength = 275 - hashtagLength
-            caption = caption.substring(0, maxCaptionLength).trim()
-            // Brief text is at the START, so truncating the end preserves it
-          }
+          // Instagram supports up to 2,200 characters - no truncation needed
+          // Just ensure brief text is in the first 125 chars (before "more" cutoff)
           
           // TaskifiAI schema: caption, image_urls[], platform, status
           const { data: post, error: postError } = await supabase
@@ -406,16 +399,8 @@ export async function POST(
         }
         
         for (const variation of variations) {
-          // Validate caption length (Sociamonials limit: 280 chars)
-          const fullCaption = variation.caption + ' ' + variation.hashtags.join(' ')
-          if (fullCaption.length > 280) {
-            console.warn(`Caption too long (${fullCaption.length} chars), truncating to fit limit...`)
-            // Truncate caption to fit hashtags
-            const hashtagLength = variation.hashtags.join(' ').length + 1
-            const maxCaptionLength = 275 - hashtagLength
-            variation.caption = variation.caption.substring(0, maxCaptionLength).trim()
-            // Brief text is at the START, so truncating the end preserves it
-          }
+          // Instagram supports up to 2,200 characters - no truncation needed
+          // Just ensure brief text is in the first 125 chars (before "more" cutoff)
           
           // TaskifiAI schema: caption, image_urls[], platform, status
           const { data: post, error: postError } = await supabase
