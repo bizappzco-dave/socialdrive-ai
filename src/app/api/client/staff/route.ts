@@ -95,9 +95,12 @@ export async function POST(request: NextRequest) {
     let userName: string | null = null
 
     if (existingUser?.users) {
-      userId = existingUser.users.id
-      userEmail = existingUser.users.email
-      userName = existingUser.users.raw_user_meta_data?.fullName || existingUser.users.raw_user_meta_data?.name
+      const user = Array.isArray(existingUser.users) ? existingUser.users[0] : existingUser.users
+      if (user) {
+        userId = user.id
+        userEmail = user.email
+        userName = (user.raw_user_meta_data as any)?.fullName || (user.raw_user_meta_data as any)?.name
+      }
     }
 
     // If user exists, add them directly
