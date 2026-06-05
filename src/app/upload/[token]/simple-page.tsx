@@ -203,6 +203,7 @@ export default function SimpleUploadPage() {
     }
     
     console.log('[MCP] Starting analysis of', images.length, 'images...')
+    console.log('[MCP] Brief text:', brief || '(none)')
     
     const allCaptions = []
     let templateMatch = null
@@ -253,7 +254,7 @@ export default function SimpleUploadPage() {
               template_match: templateMatch,
               industry: 'barber',
               count: 3,  // 3 captions per image
-              brief_text: brief  // Include the brief text for context
+              brief_text: brief || undefined  // Include brief if provided
             })
           })
           
