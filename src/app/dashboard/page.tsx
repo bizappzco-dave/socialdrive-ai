@@ -33,15 +33,33 @@ export default function DashboardPage() {
         return
       }
 
-      // Get clients owned by user OR where user is staff
-      const { data, error } = await supabase
+      // Get clients owned by user
+      const { data: ownedClients, error: ownedError } = await supabase
         .from('clients')
         .select('id, name, token, tier, user_id, created_at')
-        .or(`user_id.eq.${user.id},client_staff_access.client_id.in.(select id from client_staff_access where user_id=${user.id})`)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
-      if (error) throw error
-      setClients(data || [])
+      if (ownedError) throw ownedError
+
+      // Get clients where user is staff
+      const { data: staffAccess, error: staffError } = await supabase
+        .from('client_staff_access')
+        .select('client_id, clients:client_id (id, name, token, tier, user_id, created_at)')
+        .eq('user_id', user.id)
+
+      if (staffError) throw staffError
+
+      // Combine both lists (avoid duplicates)
+      const staffClients = staffAccess?.map(s => s.clients).filter(Boolean) || []
+      const allClients = [...(ownedClients || []), ...staffClients]
+      
+      // Remove duplicates by client id
+      const uniqueClients = Array.from(
+        new Map(allClients.map(c => [c.id, c])).values()
+      )
+
+      setClients(uniqueClients)
     } catch (err: any) {
       setError(err.message)
     } finally {
