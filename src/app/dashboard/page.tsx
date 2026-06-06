@@ -51,13 +51,21 @@ export default function DashboardPage() {
       if (staffError) throw staffError
 
       // Combine both lists (avoid duplicates)
-      const staffClients = staffAccess?.map(s => s.clients).filter(Boolean) || []
+      const staffClients = (staffAccess?.map(s => {
+        const client = s.clients
+        return Array.isArray(client) ? client[0] : client
+      }).filter(Boolean) || []) as Client[]
+      
       const allClients = [...(ownedClients || []), ...staffClients]
       
       // Remove duplicates by client id
-      const uniqueClients = Array.from(
-        new Map(allClients.map(c => [c.id, c])).values()
-      )
+      const uniqueClientsMap = new Map<string, Client>()
+      allClients.forEach((c) => {
+        if (c && c.id) {
+          uniqueClientsMap.set(c.id, c)
+        }
+      })
+      const uniqueClients = Array.from(uniqueClientsMap.values())
 
       setClients(uniqueClients)
     } catch (err: any) {
