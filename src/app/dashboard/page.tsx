@@ -7,7 +7,8 @@ import Link from 'next/link'
 interface Client {
   id: string
   name: string
-  token: string
+  upload_token: string
+  review_token: string
   tier?: string
   user_id?: string
   created_at: string
@@ -36,7 +37,7 @@ export default function DashboardPage() {
       // Get clients owned by user
       const { data: ownedClients, error: ownedError } = await supabase
         .from('clients')
-        .select('id, name, token, tier, user_id, created_at')
+        .select('id, name, upload_token, review_token, tier, user_id, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
@@ -45,7 +46,7 @@ export default function DashboardPage() {
       // Get clients where user is staff
       const { data: staffAccess, error: staffError } = await supabase
         .from('client_staff_access')
-        .select('client_id, clients:client_id (id, name, token, tier, user_id, created_at)')
+        .select('client_id, clients:client_id (id, name, upload_token, review_token, tier, user_id, created_at)')
         .eq('user_id', user.id)
 
       if (staffError) throw staffError
@@ -144,13 +145,13 @@ export default function DashboardPage() {
 
                 <div className="space-y-2">
                   <Link
-                    href={`/upload/${client.token}`}
+                    href={`/upload/${client.upload_token}`}
                     className="block w-full bg-indigo-600 hover:bg-indigo-700 text-white text-center px-4 py-2 rounded-lg font-medium transition-colors"
                   >
                     Upload Images
                   </Link>
                   <Link
-                    href={`/review?token=${client.token}`}
+                    href={`/review?token=${client.review_token}`}
                     className="block w-full bg-purple-600 hover:bg-purple-700 text-white text-center px-4 py-2 rounded-lg font-medium transition-colors"
                   >
                     Review Posts
