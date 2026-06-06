@@ -24,31 +24,46 @@ export async function GET(request: NextRequest) {
         role,
         created_at,
         invited_email,
-        invitation_accepted,
-        users:users (
-          id,
-          email,
-          raw_user_meta_data
-        )
+        invitation_accepted
       `)
       .eq('client_id', accessResult.access.clientId)
       .order('created_at', { ascending: false })
 
     if (error) {
       console.error('Failed to load staff:', error)
-      return NextResponse.json({ error: 'Failed to load staff' }, { status: 500 })
+      return NextResponse.json({ error: `Failed to load staff: ${error.message}` }, { status: 500 })
+    }
+
+    // Get user details for staff with user_id
+    const userIds = staff.filter(s => s.user_id).map(s => s.user_id)
+    let userMap = new Map()
+    
+    if (userIds.length > 0) {
+      const { data: users } = await supabase
+        .from('users')
+        .select('id, email, raw_user_meta_data')
+        .in('id', userIds)
+      
+      if (users) {
+        users.forEach(u => {
+          userMap.set(u.id, u)
+        })
+      }
     }
 
     // Format staff list
-    const formattedStaff = staff.map((s: any) => ({
-      id: s.id,
-      user_id: s.user_id,
-      email: s.users?.email || s.invited_email,
-      role: s.role,
-      created_at: s.created_at,
-      invitation_accepted: s.invitation_accepted,
-      name: s.users?.raw_user_meta_data?.fullName || s.users?.raw_user_meta_data?.name,
-    }))
+    const formattedStaff = staff.map((s: any) => {
+      const user = userMap.get(s.user_id)
+      return {
+        id: s.id,
+        user_id: s.user_id,
+        email: user?.email || s.invited_email,
+        role: s.role,
+        created_at: s.created_at,
+        invitation_accepted: s.invitation_accepted,
+        name: user?.raw_user_meta_data?.fullName || user?.raw_user_meta_data?.name,
+      }
+    })
 
     return NextResponse.json({ staff: formattedStaff })
 
