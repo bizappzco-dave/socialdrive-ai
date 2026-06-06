@@ -1,6 +1,21 @@
 export default function Home() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+      {/* Navigation */}
+      <nav className="border-b border-gray-200 bg-white">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900">SocialDrive AI</h1>
+          <div className="flex gap-4">
+            <a href="/auth/signin" className="text-gray-600 hover:text-gray-900 font-medium">
+              Sign In
+            </a>
+            <a href="/auth/signin?signup=1" className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700">
+              Get Started
+            </a>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
       <div className="max-w-6xl mx-auto px-4 py-16">
         <div className="text-center mb-16">
@@ -14,6 +29,14 @@ export default function Home() {
             Upload images, get AI-generated captions, and export directly to Sociamonials.
             Built for barber shops, salons, and service businesses.
           </p>
+          <div className="flex gap-4 justify-center mt-8">
+            <a href="/auth/signin?signup=1" className="bg-indigo-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-indigo-700 text-lg">
+              Start Free Trial
+            </a>
+            <a href="/auth/signin" className="bg-white text-indigo-600 px-8 py-3 rounded-lg font-medium border-2 border-indigo-600 hover:bg-indigo-50 text-lg">
+              Sign In
+            </a>
+          </div>
         </div>
 
         {/* Action Cards */}

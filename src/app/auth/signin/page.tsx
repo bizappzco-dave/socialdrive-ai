@@ -1,146 +1,127 @@
 'use client'
 
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
 
 export default function SignInPage() {
-  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [isSignUp, setIsSignUp] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [magicLinkSent, setMagicLinkSent] = useState(false)
+  const [message, setMessage] = useState('')
 
-  // DISABLED: Auto-check session - causing redirect loop
-  // useEffect(() => {
-  //   async function checkSession() {
-  //     const supabase = createClient()
-  //     const { data: { session } } = await supabase.auth.getSession()
-  //     if (session) {
-  //       console.log('Already have session, redirecting...')
-  //       router.push('/client/posting')
-  //     }
-  //   }
-  //   checkSession()
-  // }, [router])
-
-  async function handleMagicLinkSignIn(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    setError(null)
+    setMessage('')
+
+    const supabase = createClient()
 
     try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-      })
+      if (isSignUp) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+        })
 
-      if (error) throw error
+        if (error) throw error
 
-      setMagicLinkSent(true)
-    } catch (err: any) {
-      setError(err.message || 'Failed to send magic link')
+        setMessage('✅ Account created! Please check your email to confirm your account.')
+        setEmail('')
+        setPassword('')
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+
+        if (error) throw error
+
+        setMessage('✅ Signed in successfully! Redirecting...')
+        setTimeout(() => {
+          window.location.href = '/dashboard'
+        }, 1500)
+      }
+    } catch (error: any) {
+      setMessage(`❌ ${error.message}`)
     } finally {
       setLoading(false)
     }
   }
 
-  async function handlePasswordSignIn(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    try {
-      const supabase = createClient()
-      
-      const result = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (result.error) {
-        throw result.error
-      }
-
-      // Redirect to callback page which handles session and redirects to posting
-      router.push('/auth/callback?returnTo=/client/posting')
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign in')
-      setLoading(false)
-    }
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">SocialDrive AI</h1>
-          <p className="mt-2 text-gray-600">Sign in to your account</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {isSignUp ? 'Create Account' : 'Welcome Back'}
+          </h1>
+          <p className="text-gray-600">
+            {isSignUp ? 'Sign up to access SocialDrive AI' : 'Sign in to your account'}
+          </p>
         </div>
 
-        {error && (
-          <div className="bg-red-50 border-l-4 border-red-400 p-4">
-            <p className="text-red-700 text-sm">{error}</p>
+        {message && (
+          <div className={`mb-6 p-4 rounded-lg ${message.startsWith('✅') ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+            {message}
           </div>
         )}
 
-        {magicLinkSent ? (
-          <div className="bg-green-50 border-l-4 border-green-400 p-4">
-            <p className="text-green-700 text-sm">
-              Magic link sent to <strong>{email}</strong>. Check your email and click the link to sign in.
-            </p>
-            <button
-              onClick={() => setMagicLinkSent(false)}
-              className="mt-3 text-green-700 underline text-sm"
-            >
-              Try another email
-            </button>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Email Address
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
           </div>
-        ) : (
-          <form className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="you@example.com"
-              />
-            </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password (optional)
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Leave blank for magic link"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              minLength={6}
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+          </div>
 
-            <button
-              type="submit"
-              onClick={password ? handlePasswordSignIn : handleMagicLinkSignIn}
-              disabled={loading || !email}
-              className="w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-3 rounded-lg transition-colors disabled:opacity-50"
-            >
-              {loading ? 'Signing in...' : password ? 'Sign in with Password' : 'Send Magic Link'}
-            </button>
-          </form>
-        )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-lg bg-indigo-600 px-6 py-3 text-white font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Please wait...' : isSignUp ? 'Create Account' : 'Sign In'}
+          </button>
+        </form>
 
-        <div className="text-center text-sm text-gray-500">
-          <p>By signing in, you agree to our Terms of Service and Privacy Policy.</p>
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => {
+              setIsSignUp(!isSignUp)
+              setMessage('')
+            }}
+            className="text-indigo-600 hover:text-indigo-700 font-medium"
+          >
+            {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+          </button>
+        </div>
+
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <a href="/" className="text-center block text-sm text-gray-500 hover:text-gray-700">
+            ← Back to Home
+          </a>
         </div>
       </div>
     </div>
