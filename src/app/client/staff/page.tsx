@@ -17,6 +17,7 @@ export default function StaffManagementPage() {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   
   // Add staff form
   const [newEmail, setNewEmail] = useState('')
@@ -33,6 +34,9 @@ export default function StaffManagementPage() {
       const data = await res.json()
       if (res.ok) {
         setStaff(data.staff || [])
+        // Check if current user is admin
+        const currentUser = data.currentUser
+        setIsAdmin(currentUser?.role === 'admin' || currentUser?.isOwner)
       } else {
         setMessage(`❌ ${data.error}`)
       }
@@ -155,48 +159,64 @@ export default function StaffManagementPage() {
         </div>
       )}
 
-      {/* Add Staff Form */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Add Staff Member</h2>
-        <div className="flex gap-4 items-end">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address
-            </label>
-            <input
-              type="email"
-              value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)}
-              placeholder="team@example.com"
-              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              If they don&apos;t have an account, they&apos;ll receive an invitation
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Role
-            </label>
-            <select
-              value={newRole}
-              onChange={(e) => setNewRole(e.target.value as any)}
-              className="rounded-lg border border-gray-300 px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+      {/* Add Staff Form - Admin Only */}
+      {isAdmin ? (
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Add Staff Member</h2>
+          <div className="flex gap-4 items-end">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="team@example.com"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                If they don&apos;t have an account, they&apos;ll receive an invitation
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Role
+              </label>
+              <select
+                value={newRole}
+                onChange={(e) => setNewRole(e.target.value as any)}
+                className="rounded-lg border border-gray-300 px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              >
+                <option value="viewer">Viewer</option>
+                <option value="staff">Staff</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <button
+              onClick={addStaff}
+              disabled={adding || !newEmail}
+              className="rounded-lg bg-indigo-600 px-6 py-2.5 text-white font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <option value="viewer">Viewer</option>
-              <option value="staff">Staff</option>
-              <option value="admin">Admin</option>
-            </select>
+              {adding ? 'Adding...' : 'Add Staff'}
+            </button>
           </div>
-          <button
-            onClick={addStaff}
-            disabled={adding || !newEmail}
-            className="rounded-lg bg-indigo-600 px-6 py-2.5 text-white font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {adding ? 'Adding...' : 'Add Staff'}
-          </button>
         </div>
-      </div>
+      ) : (
+        <div className="bg-blue-50 rounded-xl border border-blue-200 p-6">
+          <p className="text-blue-800">
+            <strong>📋 View-only access:</strong> Staff management is handled by admins in the TaskifiAI Dashboard.
+          </p>
+          <a
+            href="https://taskifiai-dashboard.vercel.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block mt-3 text-blue-700 hover:text-blue-900 font-medium"
+          >
+            Open TaskifiAI Dashboard →
+          </a>
+        </div>
+      )}
 
       {/* Staff List */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
@@ -235,28 +255,36 @@ export default function StaffManagementPage() {
                 </div>
 
                 <div className="flex items-center gap-4">
-                  <select
-                    value={member.role}
-                    onChange={(e) => updateRole(member.id, e.target.value as any)}
-                    disabled={busyId === member.id}
-                    className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
-                  >
-                    <option value="viewer">Viewer</option>
-                    <option value="staff">Staff</option>
-                    <option value="admin">Admin</option>
-                  </select>
+                  {isAdmin ? (
+                    <>
+                      <select
+                        value={member.role}
+                        onChange={(e) => updateRole(member.id, e.target.value as any)}
+                        disabled={busyId === member.id}
+                        className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
+                      >
+                        <option value="viewer">Viewer</option>
+                        <option value="staff">Staff</option>
+                        <option value="admin">Admin</option>
+                      </select>
 
-                  <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${roleColors[member.role]}`}>
-                    {member.role}
-                  </span>
+                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${roleColors[member.role]}`}>
+                        {member.role}
+                      </span>
 
-                  <button
-                    onClick={() => removeStaff(member.id)}
-                    disabled={busyId === member.id}
-                    className="text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50"
-                  >
-                    {busyId === member.id ? 'Removing...' : 'Remove'}
-                  </button>
+                      <button
+                        onClick={() => removeStaff(member.id)}
+                        disabled={busyId === member.id}
+                        className="text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50"
+                      >
+                        {busyId === member.id ? 'Removing...' : 'Remove'}
+                      </button>
+                    </>
+                  ) : (
+                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${roleColors[member.role]}`}>
+                      {member.role}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}

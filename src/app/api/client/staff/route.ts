@@ -34,17 +34,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: `Failed to load staff: ${error.message}` }, { status: 500 })
     }
 
-    // Get user details for staff with user_id
+    // Get user details for staff with user_id (from auth.users schema)
     const userIds = staff.filter(s => s.user_id).map(s => s.user_id)
     let userMap = new Map()
     
     if (userIds.length > 0) {
-      const { data: users } = await supabase
-        .from('users')
+      const { data: users, error: usersError } = await supabase
+        .from('auth.users')
         .select('id, email, raw_user_meta_data')
         .in('id', userIds)
       
-      if (users) {
+      if (usersError) {
+        console.error('Failed to fetch auth users:', usersError)
+      } else if (users) {
         users.forEach(u => {
           userMap.set(u.id, u)
         })
@@ -65,7 +67,14 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ staff: formattedStaff })
+    // Return current user's role for permission checks
+    return NextResponse.json({ 
+      staff: formattedStaff,
+      currentUser: {
+        role: accessResult.access.role,
+        isOwner: accessResult.access.role === 'owner',
+      }
+    })
 
   } catch (error: any) {
     console.error('List staff error:', error.message)
