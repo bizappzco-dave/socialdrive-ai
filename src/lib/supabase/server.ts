@@ -1,21 +1,24 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
+function getSupabaseUrl() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || process.env.SUPABASE_URL?.trim()
+  if (!url) throw new Error('NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL not configured')
+  return url
+}
+
+function getSupabasePublishableKey() {
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim() || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()
+  if (!key) throw new Error('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY not configured')
+  return key
+}
+
 export async function createClient() {
   const cookieStore = await cookies()
 
-  // Use SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY for server-side (Vercel compatibility)
-  // NEXT_PUBLIC_ prefix is for browser-only
-  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
-  // Use service role key for server-side operations (bypasses RLS)
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  
-  if (!url) throw new Error('SUPABASE_URL not configured')
-  if (!key) throw new Error('SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY not configured')
-
   return createServerClient(
-    url,
-    key,
+    getSupabaseUrl(),
+    getSupabasePublishableKey(),
     {
       cookies: {
         getAll() {
@@ -28,8 +31,7 @@ export async function createClient() {
             )
           } catch {
             // The `setAll` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
+            // This can be ignored if you have middleware refreshing user sessions.
           }
         },
       },

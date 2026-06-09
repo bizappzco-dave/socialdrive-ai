@@ -3,6 +3,10 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 
 export async function GET() {
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   const results: any = {}
   
   // Test 1: Supabase with env vars
@@ -18,7 +22,7 @@ export async function GET() {
     results.supabase = '✗ FAILED: ' + e.message
   }
   
-  // Test 2: Anthropic with hardcoded key
+  // Test 2: Anthropic with configured key
   try {
     const anthropic = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY || 'not-set'

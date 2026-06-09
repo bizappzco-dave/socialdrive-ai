@@ -1,20 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+function getSupabaseUrl() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+  if (!url) throw new Error('NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL not configured')
+  return url
+}
+
+function getSupabaseSecretKey() {
+  const key = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!key) throw new Error('SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY not configured')
+  return key
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    const supabase = createClient(getSupabaseUrl(), getSupabaseSecretKey())
 
     const submissionId = params.id
     console.log('🗑️ Deleting submission:', submissionId)
 
-    // First, get all posts for this submission
     const { data: posts, error: postsError } = await supabase
       .from('posts')
       .select('id, image_url')
@@ -27,7 +35,6 @@ export async function DELETE(
 
     console.log('Found', posts?.length || 0, 'posts to delete')
 
-    // Delete posts from database FIRST (foreign key constraint)
     if (posts && posts.length > 0) {
       const { error: deletePostsError } = await supabase
         .from('posts')
@@ -40,7 +47,6 @@ export async function DELETE(
       }
       console.log('✓ Deleted', posts.length, 'posts from database')
 
-      // Delete images from Supabase storage
       const imagePaths: string[] = posts
         .map(p => {
           try {
@@ -56,17 +62,15 @@ export async function DELETE(
         const { error: storageError } = await supabase.storage
           .from('submissions')
           .remove(imagePaths)
-        
+
         if (storageError) {
           console.error('Error deleting storage files:', storageError)
-          // Don't fail - storage delete is best effort
         } else {
           console.log('✓ Deleted', imagePaths.length, 'images from storage')
         }
       }
     }
 
-    // Delete the submission itself
     const { error: subError } = await supabase
       .from('submissions')
       .delete()

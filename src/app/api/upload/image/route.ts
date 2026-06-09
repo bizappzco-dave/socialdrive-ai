@@ -9,8 +9,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 export async function POST(request: Request) {
   try {
     console.log('Image upload route called')
-    console.log('Supabase URL:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)
-    console.log('Service Role Key:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+    console.log('Supabase URL:', !!(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL))
+    console.log('Supabase secret/admin key:', !!(process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY))
     
     const formData = await request.formData()
     const file = formData.get('file') as File

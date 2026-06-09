@@ -17,8 +17,8 @@ export async function GET() {
   try {
     const supabase = createAdminClient()
     
-    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'configured' : 'MISSING')
-    console.log('Service Role Key:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'configured' : 'MISSING')
+    console.log('Supabase URL:', (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL) ? 'configured' : 'MISSING')
+    console.log('Supabase secret/admin key:', (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY) ? 'configured' : 'MISSING')
     
     // Get all clients
     const { data: clients, error } = await supabase

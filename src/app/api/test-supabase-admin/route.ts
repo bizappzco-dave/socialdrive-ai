@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function GET() {
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   try {
     const supabase = createAdminClient()
     
@@ -32,8 +36,8 @@ export async function GET() {
       noLabelClient: noLabel,
       noLabelError: noLabelError?.message || null,
       env: {
-        SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? '✓' : '✗',
-        SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? `✓ (${process.env.SUPABASE_SERVICE_ROLE_KEY.length} chars)` : '✗',
+        SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
       }
     })
     

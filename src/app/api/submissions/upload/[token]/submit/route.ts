@@ -286,8 +286,6 @@ export async function POST(
     console.log('Client tier:', clientTier)
     console.log('Claude model:', claudeModel)
     console.log('Anthropic key configured:', !!process.env.ANTHROPIC_API_KEY)
-    console.log('Anthropic key length:', process.env.ANTHROPIC_API_KEY?.length)
-    console.log('Anthropic key starts with:', process.env.ANTHROPIC_API_KEY?.substring(0, 15))
     console.log('=====================')
     
     // Generate posts for each image using hybrid router

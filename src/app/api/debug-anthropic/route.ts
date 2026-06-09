@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 
 export async function GET() {
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   const apiKey = process.env.ANTHROPIC_API_KEY
   
   const debug: {
@@ -16,8 +20,8 @@ export async function GET() {
   } = {
     keyConfigured: !!apiKey,
     keyLength: apiKey?.length || 0,
-    keyStarts: apiKey?.substring(0, 15) + '...',
-    keyEnds: apiKey?.substring(apiKey.length - 10),
+    keyStarts: '[redacted]',
+    keyEnds: '[redacted]',
   }
   
   // Try to create client
