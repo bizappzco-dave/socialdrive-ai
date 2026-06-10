@@ -412,10 +412,11 @@ export default function SimpleUploadPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Getting ready...</p>
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+        <div className="rounded-2xl border border-slate-200 bg-white px-8 py-7 text-center shadow-sm">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+          <p className="font-semibold text-slate-900">Preparing your upload link</p>
+          <p className="mt-1 text-sm text-slate-500">This only takes a moment.</p>
         </div>
       </div>
     )
@@ -423,14 +424,14 @@ export default function SimpleUploadPage() {
 
   if (error && !submission) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center border border-gray-100">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
+        <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
             <AlertCircle className="h-8 w-8 text-red-600" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Invalid Link</h1>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <p className="text-sm text-gray-500">
+          <h1 className="mb-2 text-2xl font-bold text-slate-950">Invalid upload link</h1>
+          <p className="mb-4 text-slate-600">{error}</p>
+          <p className="text-sm text-slate-500">
             Please contact us to get a new upload link.
           </p>
         </div>
@@ -440,34 +441,34 @@ export default function SimpleUploadPage() {
 
   if (uploaded) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center border border-gray-100">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="h-8 w-8 text-green-600" />
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
+        <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
+            <CheckCircle className="h-8 w-8 text-emerald-600" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Perfect! 🎉</h1>
-          <p className="text-gray-600 mb-4">
-            We're creating your social media posts now. You'll get a WhatsApp message with your review link in about 1-2 minutes.
+          <h1 className="mb-2 text-2xl font-bold text-slate-950">Upload received</h1>
+          <p className="mb-4 text-slate-600">
+            We are creating your social media posts now. You will get a review link shortly.
           </p>
-          <div className="bg-blue-50 rounded-xl p-4 mb-6">
-            <p className="text-sm text-blue-800">
-              ✨ That's it! We'll handle the rest.
+          <div className="mb-6 rounded-xl bg-emerald-50 p-4">
+            <p className="text-sm font-medium text-emerald-900">
+              Your photos and notes are safely in the queue.
             </p>
           </div>
           
           {/* Review Your Posts Link */}
           <div className="border-t border-gray-200 pt-6">
-            <p className="text-sm text-gray-600 mb-3">Next step: Pick your favorites</p>
+            <p className="mb-3 text-sm text-slate-600">Next step: pick your favorites</p>
             <a
               href={`/review/${token}`}
-              className="inline-flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 font-semibold py-3 px-6 rounded-xl transition-all"
+              className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-6 py-3 font-semibold text-white transition hover:bg-slate-800"
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
               Review & Select Favorites
             </a>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="mt-2 text-xs text-slate-500">
               Choose 3 posts from 9 AI-generated options
             </p>
           </div>
@@ -477,73 +478,104 @@ export default function SimpleUploadPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8 sm:py-12 px-4 sm:px-6">
-      <div className="max-w-xl mx-auto w-full">
-        {/* Header */}
-        <div className="text-center mb-6 sm:mb-8">
-          <div className="inline-flex items-center gap-2 bg-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-sm border border-gray-200 mb-3 sm:mb-4">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-xs sm:text-sm font-medium text-gray-700 truncate max-w-[200px] sm:max-w-none">Hi {submission?.client_name}!</span>
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#dcfce7,transparent_34%),linear-gradient(180deg,#ffffff,#f8fafc)] px-4 py-6 sm:px-6 sm:py-10">
+      <div className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+        <aside className="lg:sticky lg:top-8">
+          <div className="rounded-2xl border border-slate-200 bg-white/85 p-6 shadow-sm backdrop-blur sm:p-8">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-100">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              Connected as {submission?.client_name}
+            </div>
+            <p className="text-sm font-bold uppercase text-emerald-700">SocialDrive AI</p>
+            <h1 className="mt-3 text-4xl font-bold leading-tight tracking-tight text-slate-950 sm:text-5xl">
+              Send us your photos. We will shape them into posts.
+            </h1>
+            <p className="mt-5 text-lg leading-8 text-slate-600">
+              Upload 3-5 recent photos and add any promotion or message you want included. SocialDrive turns them into
+              ready-to-review social media captions.
+            </p>
+            <div className="mt-8 hidden gap-3 sm:grid">
+              {[
+                ['1', 'Add your offer or announcement'],
+                ['2', 'Upload clear phone photos'],
+                ['3', 'Review the generated post options'],
+              ].map(([step, label]) => (
+                <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200" key={step}>
+                  <span className="grid h-9 w-9 place-items-center rounded-full bg-white text-sm font-bold text-emerald-700 shadow-sm">
+                    {step}
+                  </span>
+                  <span className="text-sm font-semibold text-slate-700">{label}</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2 sm:mb-3">
-            Upload Your Photos
-          </h1>
-          <p className="text-base sm:text-lg text-gray-600 max-w-md mx-auto">
-            Drop 3-5 photos of what's happening this week. We'll create engaging posts for you automatically.
-          </p>
-        </div>
+        </aside>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Start Text - First Box */}
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-8">
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
-              ✨ Start Every Caption With...
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Caption context */}
+          <div className="rounded-2xl border border-emerald-900 bg-emerald-950 p-5 shadow-lg shadow-emerald-950/20 sm:p-7">
+            <h2 className="mb-2 text-xl font-bold text-white">
+              Caption context, optional
             </h2>
-            <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">
-              Include your promotion, sale, or announcement. This will appear at the START of every caption.
+            <p className="mb-4 text-sm leading-6 text-emerald-50">
+              Add anything current that should appear at the start of every caption. This could be an offer, event,
+              new service, seasonal message, recent update, or simply what you want customers to notice.
             </p>
             
             <textarea
               value={startText}
               onChange={(e) => setStartText(e.target.value)}
-              placeholder="Examples:
-• '🚨 FLASH SALE: 20% off all cuts this week!'
-• 'NEW: Free consultation this week only'
-• '🎓 Enrolling now: Barber course starts Monday'"
+              placeholder="Enter text here...
+
+Examples:
+New appointments available this week
+We are taking bookings for summer projects
+Mention our free consultation
+Highlight our new service or product range"
               rows={4}
-              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
+              className="w-full rounded-xl border-2 border-emerald-800 bg-white px-4 py-3 text-slate-900 shadow-lg shadow-emerald-900/10 outline-none transition placeholder:text-slate-500 focus:border-emerald-900 focus:bg-white focus:shadow-xl focus:shadow-emerald-900/15 focus:ring-4 focus:ring-emerald-700/15"
             />
             
             {/* Optional: Additional context */}
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
-                🧠 Optional: Extra instructions
+            <div className="mt-4 border-t border-emerald-800 pt-4">
+              <label className="mb-1 block text-sm font-semibold text-white">
+                Optional extra instructions
               </label>
+              <p className="mb-3 text-sm leading-6 text-emerald-50">
+                Use this if the AI needs more background: what is happening in the business right now, who the post is
+                aimed at, what tone to use, or anything the company wants mentioned or avoided.
+              </p>
               <textarea
                 value={context}
                 onChange={(e) => setContext(e.target.value)}
-                placeholder="e.g., 'Mention we're accredited', 'Emphasize 1-on-1 mentoring', 'Focus on job placement'..."
+                placeholder="Enter text here...
+
+Examples:
+Keep the tone friendly and local
+Mention that we work with homeowners and trade customers
+Focus on quality, reliability and quick turnaround
+Do not mention prices in this post"
                 rows={2}
-                className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
+                className="w-full rounded-xl border-2 border-emerald-800 bg-white px-4 py-2.5 text-slate-900 shadow-lg shadow-emerald-900/10 outline-none transition placeholder:text-slate-500 focus:border-emerald-900 focus:bg-white focus:shadow-xl focus:shadow-emerald-900/15 focus:ring-4 focus:ring-emerald-700/15"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Any additional details or brand guidelines for the AI
+              <p className="mt-2 text-xs text-emerald-100">
+                Leave this blank if the photos already tell the story.
               </p>
             </div>
           </div>
 
           {/* Photo Upload - Second Box */}
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-8">
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
-              📸 Your Photos
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+            <h2 className="mb-2 text-xl font-bold text-slate-950">
+              Your photos
             </h2>
-            <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
+            <p className="mb-4 text-sm leading-6 text-slate-600">
               Drop 3-5 photos here. We'll make them look amazing!
             </p>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 sm:mb-6">
-              <p className="text-sm text-blue-800">
-                💡 <strong>Pro tip:</strong> Vertical/portrait photos work best for Instagram (like phone photos). We'll optimize them automatically!
+            <div className="mb-5 rounded-xl border border-emerald-100 bg-emerald-50 p-3">
+              <p className="text-sm leading-6 text-emerald-900">
+                <strong>Tip:</strong> Vertical phone photos work best for Instagram. We will optimize them automatically.
               </p>
             </div>
             
@@ -553,13 +585,13 @@ export default function SimpleUploadPage() {
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 sm:border-3 border-dashed border-gray-300 rounded-xl p-6 sm:p-12 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all"
+                className="cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-8 text-center transition-all hover:border-emerald-500 hover:bg-emerald-50"
               >
-                <Upload className="h-12 w-12 sm:h-16 sm:w-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                <p className="text-base sm:text-lg text-gray-700 font-medium mb-2">
+                <Upload className="mx-auto mb-4 h-14 w-14 text-slate-400" />
+                <p className="mb-2 text-lg font-semibold text-slate-800">
                   Drag & drop your photos
                 </p>
-                <p className="text-sm sm:text-base text-gray-500">
+                <p className="text-sm text-slate-500">
                   or click to browse
                 </p>
                 <input
@@ -581,12 +613,12 @@ export default function SimpleUploadPage() {
                     <img
                       src={preview}
                       alt={`Preview ${index + 1}`}
-                      className="w-full h-full object-cover rounded-lg shadow-md"
+                      className="h-full w-full rounded-xl object-cover shadow-sm ring-1 ring-slate-200"
                     />
                     <button
                       type="button"
                       onClick={() => removeImage(index)}
-                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 shadow-lg"
+                      className="absolute right-2 top-2 rounded-full bg-red-500 p-1.5 text-white shadow-lg hover:bg-red-600"
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -603,7 +635,7 @@ export default function SimpleUploadPage() {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                  className="flex items-center gap-1 text-sm font-semibold text-emerald-700 hover:text-emerald-800"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -623,12 +655,12 @@ export default function SimpleUploadPage() {
 
             {images.length > 0 && (
               <div className="mt-4 flex items-center justify-between">
-                <p className="text-sm text-green-600 flex items-center gap-2">
+                <p className="flex items-center gap-2 text-sm text-emerald-700">
                   <CheckCircle className="h-5 w-5" />
                   <span className="font-medium">{images.length} photo{images.length !== 1 ? 's' : ''} ready</span>
                 </p>
                 {images.length > 5 && (
-                  <p className="text-sm text-orange-600 font-medium">
+                  <p className="text-sm font-medium text-amber-600">
                     Max 5 photos please
                   </p>
                 )}
@@ -640,7 +672,7 @@ export default function SimpleUploadPage() {
           <button
             type="submit"
             disabled={uploading || images.length === 0 || images.length > 5}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold py-4 sm:py-5 px-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all disabled:cursor-not-allowed text-lg sm:text-xl"
+            className="w-full rounded-2xl bg-slate-950 px-6 py-4 text-lg font-bold text-white shadow-lg shadow-slate-900/10 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400 sm:py-5"
           >
             {uploading ? (
               <span className="flex items-center justify-center gap-2">
@@ -648,22 +680,14 @@ export default function SimpleUploadPage() {
                 Processing...
               </span>
             ) : (
-              '✨ Process My Posts'
+              'Process my posts'
             )}
           </button>
 
-          <p className="text-xs text-gray-500 text-center">
-            We'll create engaging social media posts based on your photos. 
-            You'll get a WhatsApp message when they're ready to review!
+          <p className="text-center text-xs leading-5 text-slate-500">
+            We will create engaging social media posts from your photos and send a review link when they are ready.
           </p>
         </form>
-
-        {/* Footer */}
-        <div className="mt-12 text-center">
-          <p className="text-sm text-gray-500">
-            Simple, fast, professional. That's SocialDrive AI.
-          </p>
-        </div>
       </div>
     </div>
   )
