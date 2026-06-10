@@ -514,11 +514,11 @@ export default function SimpleUploadPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Caption context */}
-          <div className="rounded-2xl border border-emerald-900 bg-emerald-950 p-5 shadow-lg shadow-emerald-950/20 sm:p-7">
-            <h2 className="mb-2 text-xl font-bold text-white">
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm sm:p-7">
+            <h2 className="mb-2 text-xl font-bold text-slate-950">
               Caption context, optional
             </h2>
-            <p className="mb-4 text-sm leading-6 text-emerald-50">
+            <p className="mb-4 text-sm leading-6 text-slate-700">
               Add anything current that should appear at the start of every caption. This could be an offer, event,
               new service, seasonal message, recent update, or simply what you want customers to notice.
             </p>
@@ -534,15 +534,15 @@ We are taking bookings for summer projects
 Mention our free consultation
 Highlight our new service or product range"
               rows={4}
-              className="w-full rounded-xl border-2 border-emerald-800 bg-white px-4 py-3 text-slate-900 shadow-lg shadow-emerald-900/10 outline-none transition placeholder:text-slate-500 focus:border-emerald-900 focus:bg-white focus:shadow-xl focus:shadow-emerald-900/15 focus:ring-4 focus:ring-emerald-700/15"
+              className="w-full rounded-xl border-2 border-emerald-200 bg-white px-4 py-3 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-600 focus:border-emerald-400 focus:bg-white focus:shadow-md focus:ring-4 focus:ring-emerald-500/15"
             />
             
             {/* Optional: Additional context */}
-            <div className="mt-4 border-t border-emerald-800 pt-4">
-              <label className="mb-1 block text-sm font-semibold text-white">
+            <div className="mt-4 border-t border-emerald-200 pt-4">
+              <label className="mb-1 block text-sm font-semibold text-slate-950">
                 Optional extra instructions
               </label>
-              <p className="mb-3 text-sm leading-6 text-emerald-50">
+              <p className="mb-3 text-sm leading-6 text-slate-700">
                 Use this if the AI needs more background: what is happening in the business right now, who the post is
                 aimed at, what tone to use, or anything the company wants mentioned or avoided.
               </p>
@@ -557,9 +557,9 @@ Mention that we work with homeowners and trade customers
 Focus on quality, reliability and quick turnaround
 Do not mention prices in this post"
                 rows={2}
-                className="w-full rounded-xl border-2 border-emerald-800 bg-white px-4 py-2.5 text-slate-900 shadow-lg shadow-emerald-900/10 outline-none transition placeholder:text-slate-500 focus:border-emerald-900 focus:bg-white focus:shadow-xl focus:shadow-emerald-900/15 focus:ring-4 focus:ring-emerald-700/15"
+                className="w-full rounded-xl border-2 border-emerald-200 bg-white px-4 py-2.5 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-600 focus:border-emerald-400 focus:bg-white focus:shadow-md focus:ring-4 focus:ring-emerald-500/15"
               />
-              <p className="mt-2 text-xs text-emerald-100">
+              <p className="mt-2 text-xs text-slate-600">
                 Leave this blank if the photos already tell the story.
               </p>
             </div>
